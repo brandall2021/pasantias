@@ -1,0 +1,81 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+
+export function UpdateProfileForm({ user }: { user: any }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setLoading(true)
+    setMessage("")
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const res = await fetch("/api/instituciones", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: user.id,
+          name: formData.get("name"),
+          phone: formData.get("phone"),
+          institucionNombre: formData.get("institucionNombre") || undefined,
+          direccion: formData.get("direccion") || undefined,
+        }),
+      })
+
+      if (res.ok) {
+        setMessage("Perfil actualizado")
+        router.refresh()
+      }
+    } catch {
+      setMessage("Error al actualizar")
+    }
+    setLoading(false)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {message && (
+        <p className={`text-sm p-3 rounded ${message.includes("Error") ? "text-red-600 bg-red-50" : "text-green-600 bg-green-50"}`}>
+          {message}
+        </p>
+      )}
+      <div className="space-y-2">
+        <Label htmlFor="name">Nombre completo</Label>
+        <Input id="name" name="name" defaultValue={user.name} required />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" value={user.email} disabled className="bg-gray-50" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Teléfono</Label>
+        <Input id="phone" name="phone" defaultValue={user.phone || ""} />
+      </div>
+      {user.role === "INSTITUCION" && user.institucion && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="institucionNombre">Nombre de institución</Label>
+            <Input id="institucionNombre" name="institucionNombre" defaultValue={user.institucion.nombre} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="direccion">Dirección</Label>
+            <Input id="direccion" name="direccion" defaultValue={user.institucion.direccion || ""} />
+          </div>
+        </>
+      )}
+      <Button type="submit" disabled={loading}>
+        {loading ? "Guardando..." : "Guardar Cambios"}
+      </Button>
+    </form>
+  )
+}

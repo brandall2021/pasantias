@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ESTUDIANTE
+  INSTITUCION
+  ADMIN
+}
+
+enum PasantiaEstado {
+  ABIERTA
+  EN_CURSO
+  CERRADA
+}
+
+enum PostulacionEstado {
+  PENDIENTE
+  REVISADO
+  ACEPTADO
+  RECHAZADO
+}
+
+model User {
+  id             String     @id @default(cuid())
+  name           String
+  email          String     @unique
+  password       String
+  phone          String?
+  image          String?
+  role           UserRole   @default(ESTUDIANTE)
+  verified       Boolean    @default(false)
+  baneado        Boolean    @default(false)
+  motivoBaneo    String?
+  institucionId  String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  institucion    Institucion? @relation(fields: [institucionId], references: [id])
+  pasantias      Pasantia[]
+  postulaciones  Postulacion[]
+  mensajesEnviados   Mensaje[]  @relation("MensajeEmisor")
+  mensajesRecibidos  Mensaje[]  @relation("MensajeReceptor")
+  chatsCreados      Chat[]      @relation("ChatCreador")
+  chatsParticipante Chat[]      @relation("ChatParticipante")
+  resenasHechas     Resena[]    @relation("ResenaEmisor")
+  resenasRecibidas  Resena[]    @relation("ResenaReceptor")
+  reportesHechos    Report[]    @relation("ReportesHechos")
+}
+
+model Institucion {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  logo        String?
+  sitioWeb    String?
+  direccion   String?
+  ciudad      String?
+  provincia   String?
+  telefono    String?
+  email       String?
+  verificada  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usuarios    User[]
+}
+
+model Pasantia {
+  id             String          @id @default(cuid())
+  titulo         String
+  descripcion    String
+  requisitos     String?
+  area           String
+  modalidad      String          @default("PRESENCIAL") // PRESENCIAL, HIBRIDA, REMOTA
+  duracion       String?
+  becaEconomica  String?
+  cargaHoraria   String?
+  vacantes       Int             @default(1)
+  estado         PasantiaEstado  @default(ABIERTA)
+  activo         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  institucionId  String
+  institucion    User            @relation(fields: [institucionId], references: [id])
+
+  postulaciones  Postulacion[]
+  resenas        Resena[]
+  reportes       Report[]
+  chats          Chat[]
+}
+
+model Postulacion {
+  id             String             @id @default(cuid())
+  mensaje        String?
+  cvUrl          String?
+  estado         PostulacionEstado  @default(PENDIENTE)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  pasantiaId     String
+  pasantia       Pasantia           @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
+
+  estudianteId   String
+  estudiante     User               @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+
+  @@unique([pasantiaId, estudianteId])
+}
+
+model Chat {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  creadorId     String
+  creador       User     @relation("ChatCreador", fields: [creadorId], references: [id], onDelete: Cascade)
+  participanteId String
+  participante  User     @relation("ChatParticipante", fields: [participanteId], references: [id], onDelete: Cascade)
+
+  pasantiaId    String?
+  pasantia      Pasantia? @relation(fields: [pasantiaId], references: [id], onDelete: SetNull)
+
+  mensajes      Mensaje[]
+}
+
+model Mensaje {
+  id        String   @id @default(cuid())
+  contenido String?
+  leido     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  emisorId  String
+  emisor    User     @relation("MensajeEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
+  receptorId String
+  receptor  User     @relation("MensajeReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
+}
+
+model Resena {
+  id         String   @id @default(cuid())
+  puntuacion Int      // 1-5
+  comentario String?
+  createdAt  DateTime @default(now())
+
+  pasantiaId String
+  pasantia   Pasantia @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
+
+  emisorId   String
+  emisor     User     @relation("ResenaEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
+  receptorId String
+  receptor   User     @relation("ResenaReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  motivo      String
+  descripcion String?
+  estado      String   @default("PENDIENTE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  denuncianteId String
+  denunciante   User   @relation("ReportesHechos", fields: [denuncianteId], references: [id], onDelete: Cascade)
+
+  pasantiaId  String?
+  pasantia    Pasantia? @relation(fields: [pasantiaId], references: [id], onDelete: SetNull)
+}
