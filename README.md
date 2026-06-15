@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gestión de Pasantías
 
-## Getting Started
+Plataforma web para publicar, buscar y postularse a pasantías. Conecta instituciones con estudiantes.
 
-First, run the development server:
+## Tecnologías
+
+- **Framework:** Next.js 16 (App Router, TypeScript)
+- **Estilos:** Tailwind CSS v4
+- **Base de datos:** PostgreSQL + Prisma ORM
+- **Autenticación:** NextAuth v5 (Credentials, JWT)
+- **Despliegue:** Docker multi-stage para Dokploy
+
+## Roles
+
+| Rol | Descripción |
+|-----|-------------|
+| **ESTUDIANTE** | Busca pasantías, se postula, chatea con instituciones, deja reseñas |
+| **INSTITUCION** | Publica pasantías, revisa postulaciones, chatea con estudiantes |
+| **ADMIN** | Administra usuarios, pasantías, reportes y postulaciones |
+
+## Funcionalidades
+
+- Landing page con pasantías destacadas e instituciones
+- Registro y login con roles
+- Búsqueda de pasantías por área, modalidad y texto
+- Postulación con mensaje y link a CV
+- Seguimiento de postulaciones (Pendiente / Revisado / Aceptado / Rechazado)
+- Perfil de institución con sus pasantías activas
+- Chat en tiempo real entre estudiantes e instituciones
+- Sistema de reseñas y valoraciones (1-5 estrellas)
+- Panel administrativo completo
+- Reportes y denuncias
+
+## Modelo de datos
+
+- `User` — usuarios con rol (ESTUDIANTE, INSTITUCION, ADMIN)
+- `Institucion` — perfil extendido de instituciones
+- `Pasantia` — publicaciones de pasantías
+- `Postulacion` — postulaciones de estudiantes
+- `Chat` / `Mensaje` — mensajería interna
+- `Resena` — valoraciones de pasantías
+- `Report` — denuncias
+
+## Desarrollo local
 
 ```bash
+# 1. Clonar
+git clone https://github.com/brandall2021/pasantia.git
+cd pasantia
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Editar DATABASE_URL con tus datos de PostgreSQL
+
+# 4. Migrar base de datos
+npx prisma migrate dev
+
+# 5. Seed con datos de prueba
+npx prisma db seed
+
+# 6. Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Despliegue en Dokploy
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Crear repositorio: `brandall2021/pasantia` (branch `main`)
+2. Configurar variables de entorno en Dokploy:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   | Variable | Descripción |
+   |----------|-------------|
+   | `DATABASE_URL` | `postgresql://user:pass@host:5432/pasantia?schema=public` |
+   | `NEXTAUTH_URL` | `https://pasantia.tudominio.com` |
+   | `NEXTAUTH_SECRET` | Generar con `openssl rand -base64 32` |
 
-## Learn More
+3. Crear la base de datos `pasantia` en PostgreSQL
+4. El Dockerfile ejecuta `prisma migrate deploy && node server.js` al iniciar
 
-To learn more about Next.js, take a look at the following resources:
+## Credenciales de prueba
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Usuario | Email | Contraseña |
+|---------|-------|------------|
+| Admin | admin@pasantias.com | 123456 |
+| Institución | techcorp@pasantias.com | 123456 |
+| Institución | universidad@pasantias.com | 123456 |
+| Institución | estudio@pasantias.com | 123456 |
+| Estudiante | estudiante1@pasantias.com | 123456 |
+| Estudiante | estudiante2@pasantias.com | 123456 |
