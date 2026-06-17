@@ -20,16 +20,26 @@ export function UpdateProfileForm({ user }: { user: any }) {
     const formData = new FormData(e.currentTarget)
 
     try {
+      const body: Record<string, any> = {
+        id: user.id,
+        name: formData.get("name"),
+        phone: formData.get("phone") || undefined,
+        institucionNombre: formData.get("institucionNombre") || undefined,
+        direccion: formData.get("direccion") || undefined,
+      }
+
+      if (user.role === "ESTUDIANTE") {
+        body.dni = formData.get("dni") || undefined
+        body.fechaNacimiento = formData.get("fechaNacimiento") || undefined
+        body.direccion = formData.get("direccion") || undefined
+        body.asisteA = formData.get("asisteA") || undefined
+        body.legajo = formData.get("legajo") || undefined
+      }
+
       const res = await fetch("/api/instituciones", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: user.id,
-          name: formData.get("name"),
-          phone: formData.get("phone"),
-          institucionNombre: formData.get("institucionNombre") || undefined,
-          direccion: formData.get("direccion") || undefined,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (res.ok) {
@@ -70,6 +80,34 @@ export function UpdateProfileForm({ user }: { user: any }) {
           <div className="space-y-2">
             <Label htmlFor="direccion">Dirección</Label>
             <Input id="direccion" name="direccion" defaultValue={user.institucion.direccion || ""} />
+          </div>
+        </>
+      )}
+
+      {user.role === "ESTUDIANTE" && (
+        <>
+          <div className="border-t pt-4 mt-2">
+            <p className="text-sm font-medium text-gray-500 mb-3">Información personal</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dni">DNI / Pasaporte</Label>
+            <Input id="dni" name="dni" defaultValue={user.dni || ""} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fechaNacimiento">Fecha de nacimiento</Label>
+            <Input id="fechaNacimiento" name="fechaNacimiento" type="date" defaultValue={user.fechaNacimiento ? String(user.fechaNacimiento).split("T")[0] : ""} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="direccion">Dirección de residencia</Label>
+            <Input id="direccion" name="direccion" defaultValue={user.direccion || ""} placeholder="Ciudad, calle y código postal" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="asisteA">Institución a la que asiste</Label>
+            <Input id="asisteA" name="asisteA" defaultValue={user.asisteA || ""} placeholder="Universidad, escuela, etc." />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="legajo">Legajo</Label>
+            <Input id="legajo" name="legajo" defaultValue={user.legajo || ""} placeholder="Número de legajo o matrícula" />
           </div>
         </>
       )}

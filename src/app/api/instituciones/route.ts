@@ -25,17 +25,21 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   const data = await req.json()
-  const { id, ...updateData } = data
+  const { id, institucionNombre, fechaNacimiento, ...updateData } = data
+
+  if (fechaNacimiento) {
+    (updateData as any).fechaNacimiento = new Date(fechaNacimiento)
+  }
 
   const user = await prisma.user.update({
     where: { id },
     data: updateData,
   })
 
-  if (updateData.institucionNombre) {
+  if (institucionNombre) {
     await prisma.institucion.update({
       where: { id: user.institucionId! },
-      data: { nombre: updateData.institucionNombre },
+      data: { nombre: institucionNombre },
     })
   }
 

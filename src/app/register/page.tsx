@@ -28,6 +28,11 @@ export default function RegisterPage() {
       password: formData.get("password") as string,
       role,
       institucionNombre: formData.get("institucionNombre") as string,
+      dni: formData.get("dni") as string,
+      fechaNacimiento: formData.get("fechaNacimiento") as string,
+      direccion: formData.get("direccion") as string,
+      asisteA: formData.get("asisteA") as string,
+      legajo: formData.get("legajo") as string,
     }
 
     try {
@@ -95,6 +100,34 @@ export default function RegisterPage() {
                 <Label htmlFor="institucionNombre">Nombre de la institución</Label>
                 <Input id="institucionNombre" name="institucionNombre" type="text" required placeholder="Universidad, empresa, etc." />
               </div>
+            )}
+
+            {role === "ESTUDIANTE" && (
+              <>
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium text-gray-500 mb-3">Información adicional</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dni">DNI / Pasaporte</Label>
+                  <Input id="dni" name="dni" type="text" placeholder="Número de documento" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fechaNacimiento">Fecha de nacimiento</Label>
+                  <Input id="fechaNacimiento" name="fechaNacimiento" type="date" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="direccion">Dirección de residencia</Label>
+                  <Input id="direccion" name="direccion" type="text" placeholder="Ciudad, calle y código postal" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="asisteA">Institución a la que asiste</Label>
+                  <Input id="asisteA" name="asisteA" type="text" placeholder="Universidad, escuela, etc." />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="legajo">Legajo</Label>
+                  <Input id="legajo" name="legajo" type="text" placeholder="Número de legajo o matrícula" />
+                </div>
+              </>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Registrando..." : "Crear Cuenta"}
