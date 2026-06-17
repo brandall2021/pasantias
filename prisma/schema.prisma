@@ -79,6 +79,7 @@ model Institucion {
   updatedAt   DateTime @updatedAt
 
   usuarios    User[]
+  pasantiasNotificadas Pasantia[] @relation("UnidadAcademica")
 }
 
 model Pasantia {
@@ -99,6 +100,9 @@ model Pasantia {
 
   institucionId  String
   institucion    User            @relation(fields: [institucionId], references: [id])
+
+  unidadAcademicaId String?
+  unidadAcademica   Institucion? @relation("UnidadAcademica", fields: [unidadAcademicaId], references: [id])
 
   postulaciones  Postulacion[]
   resenas        Resena[]

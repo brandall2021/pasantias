@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,10 +10,25 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { AREAS } from "@/lib/constants"
 
+interface InstitucionOption {
+  id: string
+  nombre: string
+}
+
 export default function NuevaPasantiaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [instituciones, setInstituciones] = useState<InstitucionOption[]>([])
+
+  useEffect(() => {
+    fetch("/api/instituciones?todas=true")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setInstituciones(data)
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -104,6 +119,17 @@ export default function NuevaPasantiaPage() {
             <div className="space-y-2">
               <Label htmlFor="vacantes">Vacantes</Label>
               <Input id="vacantes" name="vacantes" type="number" defaultValue="1" min="1" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="unidadAcademicaId">Notificar a unidad académica (opcional)</Label>
+              <Select id="unidadAcademicaId" name="unidadAcademicaId">
+                <option value="">Seleccionar institución...</option>
+                {instituciones.map((inst) => (
+                  <option key={inst.id} value={inst.id}>{inst.nombre}</option>
+                ))}
+              </Select>
+              <p className="text-xs text-gray-500">Se enviará un email a la unidad académica seleccionada con los detalles de la pasantía.</p>
             </div>
 
             <Button type="submit" disabled={loading}>

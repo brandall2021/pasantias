@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { logAudit } from "@/lib/audit"
+import { sendEmail, pasantiaNotificationEmail } from "@/lib/email"
 
 export async function GET() {
   const pasantias = await prisma.pasantia.findMany({
@@ -33,10 +34,32 @@ export async function POST(req: Request) {
         cargaHoraria: data.cargaHoraria,
         vacantes: parseInt(data.vacantes) || 1,
         institucionId: data.institucionId,
+        unidadAcademicaId: data.unidadAcademicaId || null,
+      },
+      include: {
+        unidadAcademica: { select: { nombre: true, email: true } },
+        institucion: { select: { name: true } },
       },
     })
 
     await logAudit(session.user.id, "CREAR_PASANTIA", `Creó pasantía: ${pasantia.titulo}`)
+
+    if (pasantia.unidadAcademica?.email) {
+      const emailContent = pasantiaNotificationEmail({
+        titulo: pasantia.titulo,
+        descripcion: pasantia.descripcion,
+        area: pasantia.area,
+        modalidad: pasantia.modalidad,
+        duracion: pasantia.duracion || undefined,
+        becaEconomica: pasantia.becaEconomica || undefined,
+        empresa: pasantia.institucion.name,
+      })
+      await sendEmail({
+        to: pasantia.unidadAcademica.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      })
+    }
 
     return NextResponse.json(pasantia)
   } catch (error) {

@@ -6,6 +6,15 @@ import { logAudit } from "@/lib/audit"
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const id = url.searchParams.get("id")
+  const todas = url.searchParams.get("todas")
+
+  if (todas === "true") {
+    const instituciones = await prisma.institucion.findMany({
+      select: { id: true, nombre: true },
+      orderBy: { nombre: "asc" },
+    })
+    return NextResponse.json(instituciones)
+  }
 
   if (id) {
     const user = await prisma.user.findUnique({
