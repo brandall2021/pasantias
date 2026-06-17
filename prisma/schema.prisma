@@ -7,16 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
+// ─── Enums ────────────────────────────────────────────
+
+enum Role {
   ESTUDIANTE
-  INSTITUCION
+  EMPRESA
+  UNIVERSIDAD
+  TUTOR_EMPRESA
+  TUTOR_ACADEMICO
   ADMIN
 }
 
-enum PasantiaEstado {
-  ABIERTA
-  EN_CURSO
-  CERRADA
+enum EmpresaEstado {
+  PENDIENTE
+  VALIDADA
+  RECHAZADA
+}
+
+enum EstadoPasantia {
+  BORRADOR
+  PUBLICADA
+  SELECCION
+  ESPERA_CONVENIO
+  ACTIVA
+  FINALIZADA
+  CANCELADA
 }
 
 enum PostulacionEstado {
@@ -26,201 +41,274 @@ enum PostulacionEstado {
   RECHAZADO
 }
 
-model User {
-  id             String     @id @default(cuid())
-  name           String
-  email          String     @unique
-  password       String?
-  phone          String?
-  dni            String?
-  fechaNacimiento DateTime?
-  direccion      String?
-  asisteA        String?
-  carrera        String?
-  legajo         String?
-  anioCursada    String?
-  promedio       String?
-  image          String?
-  role           UserRole   @default(ESTUDIANTE)
-  verified       Boolean    @default(false)
-  baneado        Boolean    @default(false)
-  motivoBaneo    String?
-  institucionId  String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  institucion    Institucion? @relation(fields: [institucionId], references: [id])
-  pasantias      Pasantia[]
-  postulaciones  Postulacion[]
-  mensajesEnviados   Mensaje[]  @relation("MensajeEmisor")
-  mensajesRecibidos  Mensaje[]  @relation("MensajeReceptor")
-  chatsCreados      Chat[]      @relation("ChatCreador")
-  chatsParticipante Chat[]      @relation("ChatParticipante")
-  resenasHechas     Resena[]    @relation("ResenaEmisor")
-  resenasRecibidas  Resena[]    @relation("ResenaReceptor")
-  reportesHechos    Report[]    @relation("ReportesHechos")
-  documentos        Documento[]
-  auditoria         AuditLog[]
+enum ConvenioEstado {
+  PENDIENTE
+  COMPLETADO
 }
 
-model Institucion {
-  id          String   @id @default(cuid())
-  nombre      String   @unique
-  descripcion String?
-  logo        String?
-  sitioWeb    String?
-  direccion   String?
-  ciudad      String?
-  provincia   String?
-  telefono    String?
-  email       String?
-  verificada  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum EvaluacionTipo {
+  EMPRESA_A_ALUMNO
+  ALUMNO_A_EMPRESA
+  TUTOR
+}
 
-  usuarios    User[]
+enum TipoDocumento {
+  CV
+  DNI
+  ANALITICO
+  ALUMNO_REGULAR
+  CONVENIO
+  SEGURO
+}
+
+// ─── Empresa ──────────────────────────────────────────
+
+model Empresa {
+  id        String        @id @default(cuid())
+  nombre    String
+  cuit      String        @unique
+  direccion String?
+  telefono  String?
+  email     String?
+  sitioWeb  String?
+  logo      String?
+  estado    EmpresaEstado @default(PENDIENTE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  usuarios  User[]
+  pasantias Pasantia[]
+}
+
+// ─── Universidad / Estructura Académica ───────────────
+
+model Universidad {
+  id         String     @id @default(cuid())
+  nombre     String     @unique
+  direccion  String?
+  telefono   String?
+  email      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  facultades Facultad[]
+  usuarios   User[]
+}
+
+model Facultad {
+  id           String     @id @default(cuid())
+  nombre       String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  universidadId String
+  universidad   Universidad @relation(fields: [universidadId], references: [id], onDelete: Cascade)
+
+  carreras      Carrera[]
   pasantiasNotificadas Pasantia[] @relation("UnidadAcademica")
 }
 
-model Pasantia {
-  id             String          @id @default(cuid())
-  titulo         String
-  descripcion    String
-  requisitos     String?
-  area           String
-  modalidad      String          @default("PRESENCIAL") // PRESENCIAL, HIBRIDA, REMOTA
-  duracion       String?
-  becaEconomica  String?
-  cargaHoraria   String?
-  vacantes       Int             @default(1)
-  estado         PasantiaEstado  @default(ABIERTA)
-  activo         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+model Carrera {
+  id         String   @id @default(cuid())
+  nombre     String
+  createdAt  DateTime @default(now())
 
-  institucionId  String
-  institucion    User            @relation(fields: [institucionId], references: [id])
+  facultadId String
+  facultad   Facultad @relation(fields: [facultadId], references: [id], onDelete: Cascade)
+
+  alumnos    User[]
+}
+
+// ─── Usuario ──────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String?
+  phone          String?
+  image          String?
+  role           Role     @default(ESTUDIANTE)
+  verified       Boolean  @default(false)
+  baneado        Boolean  @default(false)
+  motivoBaneo    String?
+  dni            String?
+  fechaNacimiento DateTime?
+  direccion      String?
+  legajo         String?
+  anioCursada    String?
+  promedio       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  empresaId     String?
+  empresa       Empresa?      @relation(fields: [empresaId], references: [id])
+  universidadId String?
+  universidad   Universidad?  @relation(fields: [universidadId], references: [id])
+  carreraId     String?
+  carrera       Carrera?      @relation(fields: [carreraId], references: [id])
+
+  postulaciones Postulacion[]
+  documentos    Documento[]
+  auditoria     AuditLog[]
+  mensajes      Mensaje[]
+  evaluaciones  Evaluacion[]
+  seguimientos  Seguimiento[]
+}
+
+// ─── Pasantía ─────────────────────────────────────────
+
+model Pasantia {
+  id            String         @id @default(cuid())
+  titulo        String
+  descripcion   String
+  requisitos    String?
+  area          String
+  modalidad     String         @default("PRESENCIAL")
+  duracion      String?
+  becaEconomica String?
+  cargaHoraria  String?
+  vacantes      Int            @default(1)
+  estado        EstadoPasantia @default(BORRADOR)
+  activo        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  empresaId       String
+  empresa         Empresa     @relation(fields: [empresaId], references: [id])
 
   unidadAcademicaId String?
-  unidadAcademica   Institucion? @relation("UnidadAcademica", fields: [unidadAcademicaId], references: [id])
+  unidadAcademica   Facultad? @relation("UnidadAcademica", fields: [unidadAcademicaId], references: [id])
 
   postulaciones  Postulacion[]
-  resenas        Resena[]
-  reportes       Report[]
-  chats          Chat[]
 }
+
+// ─── Postulación ──────────────────────────────────────
 
 model Postulacion {
-  id                    String             @id @default(cuid())
-  mensaje               String?
-  cvUrl                 String?
-  estado                PostulacionEstado  @default(PENDIENTE)
+  id      String             @id @default(cuid())
+  fecha   DateTime           @default(now())
+  estado  PostulacionEstado  @default(PENDIENTE)
+  mensaje String?
 
-  convenioEstudianteUrl String?
-  convenioEmpresaUrl    String?
-  convenioInstitucionUrl String?
-  convenioCompletado    Boolean            @default(false)
-
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-
-  pasantiaId     String
-  pasantia       Pasantia           @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
-
-  estudianteId   String
-  estudiante     User         @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
-
-  documentos     Documento[]
-
-  @@unique([pasantiaId, estudianteId])
-}
-
-model Chat {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  creadorId     String
-  creador       User     @relation("ChatCreador", fields: [creadorId], references: [id], onDelete: Cascade)
-  participanteId String
-  participante  User     @relation("ChatParticipante", fields: [participanteId], references: [id], onDelete: Cascade)
-
-  pasantiaId    String?
-  pasantia      Pasantia? @relation(fields: [pasantiaId], references: [id], onDelete: SetNull)
-
-  mensajes      Mensaje[]
-}
-
-model Mensaje {
-  id        String   @id @default(cuid())
-  contenido String?
-  leido     Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  chatId    String
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  emisorId  String
-  emisor    User     @relation("MensajeEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
-  receptorId String
-  receptor  User     @relation("MensajeReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
-}
-
-model Resena {
-  id         String   @id @default(cuid())
-  puntuacion Int      // 1-5
-  comentario String?
-  createdAt  DateTime @default(now())
+  alumnoId   String
+  alumno     User     @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
 
   pasantiaId String
   pasantia   Pasantia @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
 
-  emisorId   String
-  emisor     User     @relation("ResenaEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
-  receptorId String
-  receptor   User     @relation("ResenaReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
+  convenio      Convenio?
+  conversacion  Conversacion?
+  documentos    Documento[]
+
+  @@unique([pasantiaId, alumnoId])
 }
 
-model Documento {
+// ─── Convenio Tripartito ──────────────────────────────
+
+model Convenio {
+  id               String         @id @default(cuid())
+  estado           ConvenioEstado @default(PENDIENTE)
+  firmaAlumno      Boolean        @default(false)
+  firmaEmpresa     Boolean        @default(false)
+  firmaUniversidad Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  postulacionId String      @unique
+  postulacion   Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+
+  seguimientos Seguimiento[]
+  evaluaciones Evaluacion[]
+}
+
+// ─── Conversación (Chat por postulación) ──────────────
+
+model Conversacion {
   id        String   @id @default(cuid())
-  nombre    String
-  tipo      String   // CV, ALUMNO_REGULAR, ANALITICO_PARCIAL, SALUD, OTRO
-  url       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  usuarioId    String
-  usuario      User       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  postulacionId String?
-  postulacion  Postulacion? @relation(fields: [postulacionId], references: [id], onDelete: SetNull)
+  postulacionId String      @unique
+  postulacion   Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+
+  mensajes Mensaje[]
 }
 
+model Mensaje {
+  id      String   @id @default(cuid())
+  texto   String
+  fecha   DateTime @default(now())
+
+  conversacionId String
+  conversacion   Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  autorId String
+  autor   User     @relation(fields: [autorId], references: [id])
+}
+
+// ─── Documentos ───────────────────────────────────────
+
+model Documento {
+  id         String        @id @default(cuid())
+  tipo       TipoDocumento
+  url        String
+  verificado Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+
+  usuarioId      String
+  usuario        User          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  postulacionId  String?
+  postulacion    Postulacion?  @relation(fields: [postulacionId], references: [id])
+}
+
+// ─── Seguimiento (bitácora del convenio) ──────────────
+
+model Seguimiento {
+  id          String   @id @default(cuid())
+  descripcion String
+  fecha       DateTime @default(now())
+
+  convenioId String
+  convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   User     @relation(fields: [usuarioId], references: [id])
+}
+
+// ─── Evaluaciones ─────────────────────────────────────
+
+model Evaluacion {
+  id        String           @id @default(cuid())
+  tipo      EvaluacionTipo
+  puntaje   Int
+  comentario String?
+  fecha     DateTime         @default(now())
+
+  convenioId String
+  convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
+
+  autorId String
+  autor   User     @relation(fields: [autorId], references: [id])
+}
+
+// ─── Auditoría ────────────────────────────────────────
+
 model AuditLog {
-  id        String   @id @default(cuid())
-  accion    String   // REGISTRO, LOGIN, POSTULAR, BANEAR, VERIFICAR, CREAR_PASANTIA, etc
-  detalle   String?
-  ip        String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  accion     String
+  tabla      String?
+  registroId String?
+  detalle    String?
+  ip         String?
+  fecha      DateTime @default(now())
 
   usuarioId String
   usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
   @@index([accion])
-  @@index([createdAt])
-}
-
-model Report {
-  id          String   @id @default(cuid())
-  motivo      String
-  descripcion String?
-  estado      String   @default("PENDIENTE")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  denuncianteId String
-  denunciante   User   @relation("ReportesHechos", fields: [denuncianteId], references: [id], onDelete: Cascade)
-
-  pasantiaId  String?
-  pasantia    Pasantia? @relation(fields: [pasantiaId], references: [id], onDelete: SetNull)
+  @@index([tabla])
+  @@index([fecha])
 }

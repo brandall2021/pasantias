@@ -6,7 +6,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2 } from "lucide-react"
 
@@ -22,20 +21,22 @@ export default function RegisterPage() {
     setError("")
 
     const formData = new FormData(e.currentTarget)
-    const data = {
+    const data: Record<string, any> = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       role,
-      institucionNombre: formData.get("institucionNombre") as string,
       dni: formData.get("dni") as string,
       fechaNacimiento: formData.get("fechaNacimiento") as string,
       direccion: formData.get("direccion") as string,
-      asisteA: formData.get("asisteA") as string,
-      carrera: formData.get("carrera") as string,
       legajo: formData.get("legajo") as string,
       anioCursada: formData.get("anioCursada") as string,
       promedio: formData.get("promedio") as string,
+    }
+
+    if (role === "EMPRESA") {
+      data.empresaNombre = formData.get("empresaNombre") as string
+      data.cuit = formData.get("cuit") as string
     }
 
     try {
@@ -95,14 +96,20 @@ export default function RegisterPage() {
                 onChange={(e) => setRole(e.target.value)}
               >
                 <option value="ESTUDIANTE">Estudiante</option>
-                <option value="INSTITUCION">Institución</option>
+                <option value="EMPRESA">Empresa</option>
               </select>
             </div>
-            {role === "INSTITUCION" && (
-              <div className="space-y-2">
-                <Label htmlFor="institucionNombre">Nombre de la institución</Label>
-                <Input id="institucionNombre" name="institucionNombre" type="text" required placeholder="Universidad, empresa, etc." />
-              </div>
+            {role === "EMPRESA" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="empresaNombre">Nombre de la empresa</Label>
+                  <Input id="empresaNombre" name="empresaNombre" type="text" required placeholder="Razón social" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cuit">CUIT</Label>
+                  <Input id="cuit" name="cuit" type="text" required placeholder="30-12345678-9" />
+                </div>
+              </>
             )}
 
             {role === "ESTUDIANTE" && (
@@ -124,15 +131,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="border-t pt-4 mt-2">
-                  <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos e institucionales</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="asisteA">Institución educativa</Label>
-                  <Input id="asisteA" name="asisteA" type="text" placeholder="Universidad, escuela, facultad" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="carrera">Carrera / Especialidad</Label>
-                  <Input id="carrera" name="carrera" type="text" placeholder="Programa de estudios actual" />
+                  <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="legajo">N° de matrícula / Legajo</Label>

@@ -1,85 +1,121 @@
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
-
-const DOCS_REQUERIDOS = ["CV", "ALUMNO_REGULAR", "ANALITICO_PARCIAL", "SALUD"]
 
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user || session.user.role !== "ESTUDIANTE") {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    return NextResponse.json({ error: "Solo estudiantes pueden postularse" }, { status: 403 })
   }
 
   try {
-    const { pasantiaId, mensaje, documentos: docsData } = await req.json()
-
-    if (!pasantiaId) {
-      return NextResponse.json({ error: "Falta la pasantía" }, { status: 400 })
-    }
+    const { pasantiaId, mensaje } = await req.json()
 
     const pasantia = await prisma.pasantia.findUnique({ where: { id: pasantiaId } })
-    if (!pasantia || !pasantia.activo) {
-      return NextResponse.json({ error: "Pasantía no disponible" }, { status: 400 })
+    if (!pasantia) return NextResponse.json({ error: "Pasantía no encontrada" }, { status: 404 })
+    if (pasantia.estado !== "PUBLICADA") {
+      return NextResponse.json({ error: "Esta pasantía no acepta postulaciones" }, { status: 400 })
     }
 
-    const existente = await prisma.postulacion.findUnique({
-      where: { pasantiaId_estudianteId: { pasantiaId, estudianteId: session.user.id } },
+    const existing = await prisma.postulacion.findUnique({
+      where: { pasantiaId_alumnoId: { pasantiaId, alumnoId: session.user.id } },
     })
-    if (existente) {
+    if (existing) {
       return NextResponse.json({ error: "Ya te postulaste a esta pasantía" }, { status: 400 })
-    }
-
-    const docsAdjuntos = docsData || []
-    const tiposAdjuntos = docsAdjuntos.map((d: any) => d.tipo)
-    const faltantes = DOCS_REQUERIDOS.filter((t) => !tiposAdjuntos.includes(t))
-
-    if (faltantes.length > 0) {
-      return NextResponse.json({
-        error: `Faltan documentos obligatorios: ${faltantes.join(", ")}`,
-        faltantes,
-      }, { status: 400 })
     }
 
     const postulacion = await prisma.postulacion.create({
       data: {
         pasantiaId,
-        estudianteId: session.user.id,
-        mensaje: mensaje || null,
-        documentos: {
-          create: docsAdjuntos.map((d: any) => ({
-            nombre: d.nombre,
-            tipo: d.tipo,
-            url: d.url,
-            usuarioId: session.user.id,
-          })),
-        },
+        alumnoId: session.user.id,
+        mensaje,
       },
-      include: { documentos: true },
     })
 
-    await logAudit(session.user.id, "POSTULAR", `Postulación a pasantía: ${pasantia.titulo}`)
+    // Create conversacion automáticamente
+    await prisma.conversacion.create({
+      data: { postulacionId: postulacion.id },
+    })
 
-    return NextResponse.json(postulacion, { status: 201 })
+    await logAudit(session.user.id, "POSTULAR", `Se postuló a: ${pasantia.titulo}`, "Postulacion", postulacion.id)
+    return NextResponse.json(postulacion)
   } catch (error) {
-    return NextResponse.json({ error: "Error al postular" }, { status: 500 })
+    return NextResponse.json({ error: "Error al postularse" }, { status: 500 })
   }
 }
 
 export async function PATCH(req: Request) {
   const session = await auth()
-  if (!session?.user || session.user.role !== "INSTITUCION") {
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+  const { id, estado } = await req.json()
+
+  const postulacion = await prisma.postulacion.findUnique({
+    where: { id },
+    include: {
+      pasantia: { include: { empresa: { select: { id: true } } } },
+      alumno: { select: { id: true } },
+    },
+  })
+  if (!postulacion) return NextResponse.json({ error: "No encontrada" }, { status: 404 })
+
+  const userEmpresaId = (session.user as any).empresaId
+  const esEmpresa = postulacion.pasantia.empresaId === userEmpresaId
+  const esAdmin = session.user.role === "ADMIN"
+
+  if (!esEmpresa && !esAdmin) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  try {
-    const { id, estado } = await req.json()
-    const postulacion = await prisma.postulacion.update({
-      where: { id },
-      data: { estado },
+  const updated = await prisma.postulacion.update({
+    where: { id },
+    data: { estado },
+  })
+
+  await logAudit(session.user.id, "CAMBIAR_ESTADO_POSTULACION",
+    `Cambió estado de postulación a ${estado}`, "Postulacion", id)
+
+  return NextResponse.json(updated)
+}
+
+export async function GET(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+  const url = new URL(req.url)
+  const pasantiaId = url.searchParams.get("pasantiaId")
+
+  if (session.user.role === "ESTUDIANTE") {
+    const postulaciones = await prisma.postulacion.findMany({
+      where: { alumnoId: session.user.id, ...(pasantiaId ? { pasantiaId } : {}) },
+      include: {
+        pasantia: { select: { id: true, titulo: true, area: true, modalidad: true, estado: true } },
+        convenio: true,
+      },
+      orderBy: { fecha: "desc" },
     })
-    return NextResponse.json(postulacion)
-  } catch {
-    return NextResponse.json({ error: "Error al actualizar" }, { status: 500 })
+    return NextResponse.json(postulaciones)
   }
+
+  if (session.user.role === "EMPRESA" || session.user.role === "ADMIN") {
+    const empresaId = (session.user as any).empresaId
+    const where: any = pasantiaId ? { pasantiaId } : {}
+    if (session.user.role === "EMPRESA") {
+      where.pasantia = { empresaId }
+    }
+
+    const postulaciones = await prisma.postulacion.findMany({
+      where,
+      include: {
+        alumno: { select: { name: true, email: true } },
+        pasantia: { select: { titulo: true } },
+        convenio: true,
+      },
+      orderBy: { fecha: "desc" },
+    })
+    return NextResponse.json(postulaciones)
+  }
+
+  return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 }

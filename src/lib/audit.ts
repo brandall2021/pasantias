@@ -4,13 +4,14 @@ export async function logAudit(
   usuarioId: string,
   accion: string,
   detalle?: string,
-  ip?: string
+  tabla?: string,
+  registroId?: string,
 ) {
   try {
     await prisma.auditLog.create({
-      data: { usuarioId, accion, detalle, ip },
+      data: { usuarioId, accion, detalle, tabla, registroId },
     })
-  } catch {
-    // Silent fail - auditoria no debe romper la app
+  } catch (error) {
+    console.error("Error logging audit:", error)
   }
 }

@@ -5,9 +5,11 @@ declare module "next-auth" {
     user: {
       id: string
       role: string
-      institucionId?: string
+      empresaId?: string
+      universidadId?: string
+      carreraId?: string
     } & DefaultSession["user"]
   }
 }
 
-export type UserRole = "ESTUDIANTE" | "INSTITUCION" | "ADMIN"
+export type UserRole = "ESTUDIANTE" | "EMPRESA" | "UNIVERSIDAD" | "ADMIN"

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { AREAS } from "@/lib/constants"
+import { AREAS, ESTADOS_PASANTIA } from "@/lib/constants"
 import { SearchIcon } from "lucide-react"
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
 export default async function PasantiasPage({ searchParams }: Props) {
   const params = await searchParams
 
-  const where: any = { activo: true, estado: "ABIERTA" }
+  const where: any = { activo: true, estado: "PUBLICADA" }
   if (params.q) {
     where.OR = [
       { titulo: { contains: params.q, mode: "insensitive" } },
@@ -27,8 +27,7 @@ export default async function PasantiasPage({ searchParams }: Props) {
   const pasantias = await prisma.pasantia.findMany({
     where,
     include: {
-      institucion: { select: { name: true } },
-      resenas: { select: { puntuacion: true } },
+      empresa: { select: { nombre: true } },
     },
     orderBy: { createdAt: "desc" },
   })
@@ -63,34 +62,26 @@ export default async function PasantiasPage({ searchParams }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {pasantias.map((p) => {
-            const puntuaciones = p.resenas.map(r => r.puntuacion)
-            const promedio = puntuaciones.length > 0
-              ? puntuaciones.reduce((a, b) => a + b, 0) / puntuaciones.length
-              : 0
-
-            return (
-              <Link key={p.id} href={`/pasantias/${p.id}`}>
-                <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge>{p.area}</Badge>
-                      <Badge variant="secondary">{p.modalidad}</Badge>
-                    </div>
-                    <h3 className="font-semibold mb-1">{p.titulo}</h3>
-                    <p className="text-sm text-gray-500 mb-2">{p.institucion.name}</p>
-                    {p.becaEconomica && (
-                      <p className="text-sm font-medium text-green-600 mb-1">Beca: ${p.becaEconomica}</p>
-                    )}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-                      {p.duracion && <span>Duración: {p.duracion}</span>}
-                      {promedio > 0 && <span>★ {promedio.toFixed(1)}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
+          {pasantias.map((p) => (
+            <Link key={p.id} href={`/pasantias/${p.id}`}>
+              <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge>{p.area}</Badge>
+                    <Badge variant="secondary">{p.modalidad}</Badge>
+                  </div>
+                  <h3 className="font-semibold mb-1">{p.titulo}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{p.empresa.nombre}</p>
+                  {p.becaEconomica && (
+                    <p className="text-sm font-medium text-green-600 mb-1">Beca: ${p.becaEconomica}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
+                    {p.duracion && <span>Duración: {p.duracion}</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       )}
     </div>

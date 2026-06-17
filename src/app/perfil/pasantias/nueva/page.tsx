@@ -10,22 +10,23 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { AREAS } from "@/lib/constants"
 
-interface InstitucionOption {
+interface FacultadOption {
   id: string
   nombre: string
+  universidad: { nombre: string }
 }
 
 export default function NuevaPasantiaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [instituciones, setInstituciones] = useState<InstitucionOption[]>([])
+  const [facultades, setFacultades] = useState<FacultadOption[]>([])
 
   useEffect(() => {
-    fetch("/api/instituciones?todas=true")
+    fetch("/api/facultades")
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data)) setInstituciones(data)
+        if (Array.isArray(data)) setFacultades(data)
       })
       .catch(() => {})
   }, [])
@@ -125,8 +126,8 @@ export default function NuevaPasantiaPage() {
               <Label htmlFor="unidadAcademicaId">Notificar a unidad académica (opcional)</Label>
               <Select id="unidadAcademicaId" name="unidadAcademicaId">
                 <option value="">Seleccionar institución...</option>
-                {instituciones.map((inst) => (
-                  <option key={inst.id} value={inst.id}>{inst.nombre}</option>
+                {facultades.map((f) => (
+                  <option key={f.id} value={f.id}>{f.universidad.nombre} - {f.nombre}</option>
                 ))}
               </Select>
               <p className="text-xs text-gray-500">Se enviará un email a la unidad académica seleccionada con los detalles de la pasantía.</p>

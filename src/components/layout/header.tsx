@@ -27,7 +27,7 @@ export function Header() {
 
             {session?.user ? (
               <>
-                {session.user.role === "INSTITUCION" && (
+                {session.user.role === "EMPRESA" && (
                   <Link href="/perfil/pasantias" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
                     Mis Pasantías
                   </Link>
@@ -83,7 +83,7 @@ export function Header() {
             </Link>
             {session?.user ? (
               <>
-                {session.user.role === "INSTITUCION" && (
+                {session.user.role === "EMPRESA" && (
                   <Link href="/perfil/pasantias" className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
                     Mis Pasantías
                   </Link>

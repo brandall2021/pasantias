@@ -30,9 +30,28 @@ export const PROVINCIAS_ARGENTINA = [
   "Santiago del Estero", "Tierra del Fuego", "Tucumán",
 ] as const
 
-export const ESTADOS_POSTULACION = {
-  PENDIENTE: { label: "Pendiente", color: "warning" },
-  REVISADO: { label: "Revisado", color: "secondary" },
-  ACEPTADO: { label: "Aceptado", color: "success" },
-  RECHAZADO: { label: "Rechazado", color: "destructive" },
-} as const
+export const ESTADOS_PASANTIA: Record<string, { label: string; color: string }> = {
+  BORRADOR: { label: "Borrador", color: "bg-gray-100 text-gray-800" },
+  PUBLICADA: { label: "Publicada", color: "bg-blue-100 text-blue-800" },
+  SELECCION: { label: "Selección", color: "bg-yellow-100 text-yellow-800" },
+  ESPERA_CONVENIO: { label: "Espera convenio", color: "bg-purple-100 text-purple-800" },
+  ACTIVA: { label: "Activa", color: "bg-green-100 text-green-800" },
+  FINALIZADA: { label: "Finalizada", color: "bg-gray-100 text-gray-800" },
+  CANCELADA: { label: "Cancelada", color: "bg-red-100 text-red-800" },
+}
+
+export const ESTADOS_POSTULACION: Record<string, { label: string; color: string }> = {
+  PENDIENTE: { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" },
+  REVISADO: { label: "Revisado", color: "bg-blue-100 text-blue-800" },
+  ACEPTADO: { label: "Aceptado", color: "bg-green-100 text-green-800" },
+  RECHAZADO: { label: "Rechazado", color: "bg-red-100 text-red-800" },
+}
+
+export const TIPOS_DOCUMENTO: Record<string, string> = {
+  CV: "CV",
+  DNI: "DNI",
+  ANALITICO: "Analítico",
+  ALUMNO_REGULAR: "Alumno Regular",
+  CONVENIO: "Convenio",
+  SEGURO: "Seguro",
+}

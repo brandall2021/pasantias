@@ -13,7 +13,7 @@ export default async function AdminUsuariosPage() {
   if (!session?.user || session.user.role !== "ADMIN") redirect("/login")
 
   const usuarios = await prisma.user.findMany({
-    include: { institucion: true, _count: { select: { pasantias: true, postulaciones: true } } },
+    include: { empresa: true, _count: { select: { postulaciones: true } } },
     orderBy: { createdAt: "desc" },
   })
 
@@ -49,10 +49,10 @@ export default async function AdminUsuariosPage() {
                     <td className="py-3">
                       <Badge variant={
                         u.role === "ADMIN" ? "destructive" :
-                        u.role === "INSTITUCION" ? "default" : "secondary"
+                        u.role === "EMPRESA" ? "default" : "secondary"
                       }>
                         {u.role === "ESTUDIANTE" ? "Estudiante" :
-                         u.role === "INSTITUCION" ? "Institución" : "Admin"}
+                         u.role === "EMPRESA" ? "Empresa" : "Admin"}
                       </Badge>
                     </td>
                     <td className="py-3">
@@ -65,7 +65,7 @@ export default async function AdminUsuariosPage() {
                       )}
                     </td>
                     <td className="py-3 text-xs text-gray-400">
-                      {u._count.pasantias > 0 && <div>{u._count.pasantias} pasantías</div>}
+                      {                        u.empresa && <div>{u.empresa.nombre}</div>}
                       {u._count.postulaciones > 0 && <div>{u._count.postulaciones} postulaciones</div>}
                       <div>Registro: {formatDate(u.createdAt)}</div>
                     </td>

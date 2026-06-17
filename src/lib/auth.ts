@@ -9,9 +9,7 @@ import { logAudit } from "./audit"
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-  },
+  pages: { signIn: "/login" },
   providers: [
     Credentials({
       credentials: {
@@ -23,18 +21,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-          include: { institucion: true },
+          include: { empresa: true, universidad: true, carrera: { include: { facultad: { include: { universidad: true } } } } },
         })
 
         if (!user) return null
         if (user.baneado) return null
         if (!user.password) return null
 
-        const passwordMatch = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
-
+        const passwordMatch = await bcrypt.compare(credentials.password as string, user.password)
         if (!passwordMatch) return null
 
         return {
@@ -43,19 +37,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           image: user.image,
           role: user.role,
-          institucionId: user.institucionId,
+          empresaId: user.empresaId,
+          universidadId: user.universidadId,
+          carreraId: user.carreraId,
         }
       },
     }),
-    Google({
-      allowDangerousEmailAccountLinking: true,
-    }),
+    Google({ allowDangerousEmailAccountLinking: true }),
   ],
   callbacks: {
     async signIn({ user, account }) {
       if (user.id) {
         const provider = account?.provider || "credentials"
-        await logAudit(user.id, "LOGIN", `Inicio de sesión via ${provider}`)
+        await logAudit(user.id, "LOGIN", `Inicio de sesión via ${provider}`, "User", user.id)
       }
       return true
     },
@@ -63,15 +57,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = (user as any).role
         token.id = user.id
-        token.institucionId = (user as any).institucionId
+        token.empresaId = (user as any).empresaId
+        token.universidadId = (user as any).universidadId
+        token.carreraId = (user as any).carreraId
       }
       if (account?.provider === "google") {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-        })
-        if (dbUser) {
-          token.role = dbUser.role
-        }
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } })
+        if (dbUser) token.role = dbUser.role
       }
       return token
     },
@@ -79,7 +71,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.role = token.role as string
         session.user.id = token.id as string
-        ;(session.user as any).institucionId = token.institucionId as string
+        ;(session.user as any).empresaId = token.empresaId as string
+        ;(session.user as any).universidadId = token.universidadId as string
+        ;(session.user as any).carreraId = token.carreraId as string
       }
       return session
     },

@@ -16,7 +16,7 @@ export default async function PerfilPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { institucion: true },
+    include: { empresa: true, universidad: true, carrera: true },
   })
 
   if (!user) redirect("/login")
@@ -35,7 +35,7 @@ export default async function PerfilPage() {
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-        {user.role === "INSTITUCION" && (
+        {user.role === "EMPRESA" && (
           <>
             <Link href="/perfil/pasantias">
               <Card className="cursor-pointer hover:shadow-md transition-shadow">

@@ -6,97 +6,63 @@ async function main() {
 
   const password = await bcrypt.hash("123456", 12)
 
-  const admin = await prisma.user.upsert({
+  // ─── Admin ──────────────────────────────────────────
+  await prisma.user.upsert({
     where: { email: "admin@pasantias.com" },
     update: {},
-    create: {
-      name: "Admin",
-      email: "admin@pasantias.com",
-      password,
-      role: "ADMIN",
-      verified: true,
-    },
+    create: { name: "Admin", email: "admin@pasantias.com", password, role: "ADMIN", verified: true },
   })
-  console.log("✅ Admin creado:", admin.email)
+  console.log("✅ Admin creado")
 
-  const inst1 = await prisma.institucion.upsert({
-    where: { nombre: "TechCorp Argentina" },
+  // ─── Universidad / Facultad / Carrera ───────────────
+  const univ = await prisma.universidad.upsert({
+    where: { nombre: "Universidad Nacional de Tucumán" },
     update: {},
-    create: {
+    create: { nombre: "Universidad Nacional de Tucumán", email: "contacto@unt.edu.ar" },
+  })
+
+  const face = await prisma.facultad.create({
+    data: { nombre: "Facultad de Ciencias Exactas (FACE)", universidadId: univ.id },
+  })
+
+  const carrera1 = await prisma.carrera.create({ data: { nombre: "Lic. en Sistemas de Información", facultadId: face.id } })
+  const carrera2 = await prisma.carrera.create({ data: { nombre: "Lic. en Matemática", facultadId: face.id } })
+
+  // ─── Empresas ───────────────────────────────────────
+  const empresa1 = await prisma.empresa.create({
+    data: {
       nombre: "TechCorp Argentina",
-      descripcion: "Empresa líder en desarrollo de software con más de 10 años en el mercado argentino. Especialistas en soluciones web y móviles.",
+      cuit: "30-12345678-9",
       direccion: "Av. Corrientes 1234, CABA",
-      ciudad: "CABA",
-      provincia: "Buenos Aires",
-      sitioWeb: "https://techcorp.com.ar",
-      verificada: true,
+      email: "contacto@techcorp.com.ar",
+      estado: "VALIDADA",
     },
   })
 
-  const inst2 = await prisma.institucion.upsert({
-    where: { nombre: "Universidad Nacional" },
-    update: {},
-    create: {
-      nombre: "Universidad Nacional",
-      descripcion: "Universidad pública con más de 50 años de trayectoria en educación superior.",
-      direccion: "Calle Principal 567",
-      ciudad: "Córdoba",
-      provincia: "Córdoba",
-      verificada: true,
-    },
-  })
-
-  const inst3 = await prisma.institucion.upsert({
-    where: { nombre: "Estudio Jurídico Pérez & Asoc." },
-    update: {},
-    create: {
+  const empresa2 = await prisma.empresa.create({
+    data: {
       nombre: "Estudio Jurídico Pérez & Asoc.",
-      descripcion: "Estudio jurídico especializado en derecho corporativo y comercial.",
-      direccion: "San Martín 890",
-      ciudad: "Rosario",
-      provincia: "Santa Fe",
+      cuit: "30-87654321-0",
+      direccion: "San Martín 890, Rosario",
+      email: "contacto@estudioperez.com",
+      estado: "VALIDADA",
     },
   })
 
-  const instUser1 = await prisma.user.upsert({
+  console.log("✅ Empresas creadas")
+
+  // ─── Usuarios ───────────────────────────────────────
+  const userEmpresa1 = await prisma.user.upsert({
     where: { email: "techcorp@pasantias.com" },
     update: {},
-    create: {
-      name: "TechCorp Argentina",
-      email: "techcorp@pasantias.com",
-      password,
-      role: "INSTITUCION",
-      institucionId: inst1.id,
-      verified: true,
-    },
+    create: { name: "TechCorp Argentina", email: "techcorp@pasantias.com", password, role: "EMPRESA", empresaId: empresa1.id, verified: true },
   })
 
-  const instUser2 = await prisma.user.upsert({
-    where: { email: "universidad@pasantias.com" },
-    update: {},
-    create: {
-      name: "Universidad Nacional",
-      email: "universidad@pasantias.com",
-      password,
-      role: "INSTITUCION",
-      institucionId: inst2.id,
-      verified: true,
-    },
-  })
-
-  const instUser3 = await prisma.user.upsert({
+  const userEmpresa2 = await prisma.user.upsert({
     where: { email: "estudio@pasantias.com" },
     update: {},
-    create: {
-      name: "Estudio Jurídico Pérez & Asoc.",
-      email: "estudio@pasantias.com",
-      password,
-      role: "INSTITUCION",
-      institucionId: inst3.id,
-    },
+    create: { name: "Estudio Jurídico Pérez & Asoc.", email: "estudio@pasantias.com", password, role: "EMPRESA", empresaId: empresa2.id },
   })
-
-  console.log("✅ Instituciones creadas")
 
   const estudiante1 = await prisma.user.upsert({
     where: { email: "estudiante1@pasantias.com" },
@@ -106,6 +72,11 @@ async function main() {
       email: "estudiante1@pasantias.com",
       password,
       role: "ESTUDIANTE",
+      dni: "40123456",
+      legajo: "SIS-2020-1234",
+      carreraId: carrera1.id,
+      anioCursada: "4to",
+      promedio: "8.5",
     },
   })
 
@@ -117,131 +88,44 @@ async function main() {
       email: "estudiante2@pasantias.com",
       password,
       role: "ESTUDIANTE",
+      dni: "41234567",
+      legajo: "SIS-2021-5678",
+      carreraId: carrera1.id,
+      anioCursada: "3ro",
+      promedio: "9.0",
     },
   })
 
-  console.log("✅ Estudiantes creados")
+  console.log("✅ Usuarios creados")
 
-  const pasantias = [
-    {
-      titulo: "Pasante de Desarrollo Web Full Stack",
-      descripcion: "Buscamos un pasante entusiasta para sumarse a nuestro equipo de desarrollo. Trabajarás con tecnologías modernas como React, Node.js y PostgreSQL en proyectos reales.",
-      requisitos: "Conocimientos básicos de JavaScript/TypeScript. Ganas de aprender. Estudiante de sistemas o carreras afines.",
-      area: "tecnologia",
-      modalidad: "HIBRIDA",
-      duracion: "6 meses",
-      becaEconomica: "80000",
-      cargaHoraria: "20 hs semanales",
-      vacantes: 2,
-      institucionId: instUser1.id,
-    },
-    {
-      titulo: "Pasante de Marketing Digital",
-      descripcion: "Buscamos pasante para el área de marketing digital. Manejo de redes sociales, creación de contenido y análisis de métricas.",
-      requisitos: "Estudiante de marketing, comunicación o carreras afines. Conocimiento de redes sociales.",
-      area: "marketing",
-      modalidad: "REMOTA",
-      duracion: "4 meses",
-      becaEconomica: "50000",
-      cargaHoraria: "15 hs semanales",
-      vacantes: 1,
-      institucionId: instUser1.id,
-    },
-    {
-      titulo: "Pasante de Administración",
-      descripcion: "Colaboración en tareas administrativas generales, archivo, atención al público y apoyo a la gestión.",
-      requisitos: "Estudiante de administración de empresas o carreras afines. Buena presencia y manejo de Office.",
-      area: "administracion",
-      modalidad: "PRESENCIAL",
-      duracion: "3 meses",
-      becaEconomica: "40000",
-      cargaHoraria: "20 hs semanales",
-      vacantes: 1,
-      institucionId: instUser2.id,
-    },
-    {
-      titulo: "Pasante de Diseño Gráfico",
-      descripcion: "Buscamos pasante para crear piezas gráficas, editar imágenes y asistir en la producción de contenido visual.",
-      requisitos: "Manejo de Adobe Illustrator, Photoshop y/o Figma. Portfolio básico.",
-      area: "diseno",
-      modalidad: "HIBRIDA",
-      duracion: "4 meses",
-      becaEconomica: "60000",
-      cargaHoraria: "20 hs semanales",
-      vacantes: 1,
-      institucionId: instUser2.id,
-    },
-    {
-      titulo: "Pasante de Recursos Humanos",
-      descripcion: "Apoyo en procesos de selección, entrevistas, onboarding y administración de personal.",
-      requisitos: "Estudiante de RRHH o psicología laboral. Buen manejo de relaciones interpersonales.",
-      area: "recursos-humanos",
-      modalidad: "PRESENCIAL",
-      duracion: "6 meses",
-      becaEconomica: "45000",
-      cargaHoraria: "20 hs semanales",
-      vacantes: 1,
-      institucionId: instUser3.id,
-    },
-    {
-      titulo: "Pasante Legal",
-      descripcion: "Asistencia en la preparación de documentos legales, investigación de jurisprudencia y apoyo en causas.",
-      requisitos: "Estudiante avanzado de abogacía. Conocimiento de derecho comercial.",
-      area: "legal",
-      modalidad: "PRESENCIAL",
-      duracion: "4 meses",
-      becaEconomica: "55000",
-      cargaHoraria: "15 hs semanales",
-      vacantes: 2,
-      institucionId: instUser3.id,
-    },
+  // ─── Pasantías ──────────────────────────────────────
+  type PasantiaSeed = {
+    titulo: string; descripcion: string; requisitos: string; area: string
+    modalidad: string; duracion: string; becaEconomica: string; cargaHoraria?: string
+    vacantes: number; empresaId: string; estado: "PUBLICADA"; activo: boolean
+  }
+
+  const pasantias: PasantiaSeed[] = [
+    { titulo: "Pasante de Desarrollo Web Full Stack", descripcion: "Trabajarás con tecnologías modernas como React, Node.js y PostgreSQL en proyectos reales.", requisitos: "Conocimientos básicos de JS/TS. Estudiante de sistemas o carreras afines.", area: "tecnologia", modalidad: "HIBRIDA", duracion: "6 meses", becaEconomica: "80000", cargaHoraria: "20 hs semanales", vacantes: 2, empresaId: empresa1.id, estado: "PUBLICADA", activo: true },
+    { titulo: "Pasante de Marketing Digital", descripcion: "Manejo de redes sociales, creación de contenido y análisis de métricas.", requisitos: "Estudiante de marketing, comunicación o carreras afines.", area: "marketing", modalidad: "REMOTA", duracion: "4 meses", becaEconomica: "50000", vacantes: 1, empresaId: empresa1.id, estado: "PUBLICADA", activo: true },
+    { titulo: "Pasante de Administración", descripcion: "Colaboración en tareas administrativas generales, archivo y apoyo a la gestión.", requisitos: "Estudiante de administración. Manejo de Office.", area: "administracion", modalidad: "PRESENCIAL", duracion: "3 meses", becaEconomica: "40000", vacantes: 1, empresaId: empresa2.id, estado: "PUBLICADA", activo: true },
+    { titulo: "Pasante Legal", descripcion: "Asistencia en preparación de documentos legales e investigación de jurisprudencia.", requisitos: "Estudiante avanzado de abogacía.", area: "legal", modalidad: "PRESENCIAL", duracion: "4 meses", becaEconomica: "55000", vacantes: 2, empresaId: empresa2.id, estado: "PUBLICADA", activo: true },
   ]
 
   for (const p of pasantias) {
     await prisma.pasantia.create({ data: p })
   }
-
   console.log("✅ Pasantías creadas:", pasantias.length)
 
-  const pasantiasCreadas = await prisma.pasantia.findMany({ take: 3 })
-
-  await prisma.resena.create({
-    data: {
-      puntuacion: 5,
-      comentario: "Excelente experiencia de aprendizaje. Muy buen equipo de trabajo.",
-      pasantiaId: pasantiasCreadas[0].id,
-      emisorId: estudiante1.id,
-      receptorId: instUser1.id,
-    },
-  })
-
-  await prisma.resena.create({
-    data: {
-      puntuacion: 4,
-      comentario: "Buena pasantía, aprendí mucho sobre desarrollo web.",
-      pasantiaId: pasantiasCreadas[0].id,
-      emisorId: estudiante2.id,
-      receptorId: instUser1.id,
-    },
-  })
-
-  console.log("✅ Reseñas creadas")
-
-  console.log("\n🎉 Seed completado exitosamente!")
-  console.log("\n📧 Credenciales de prueba:")
-  console.log("   Admin: admin@pasantias.com / 123456")
-  console.log("   Institución: techcorp@pasantias.com / 123456")
-  console.log("   Institución: universidad@pasantias.com / 123456")
-  console.log("   Institución: estudio@pasantias.com / 123456")
-  console.log("   Estudiante: estudiante1@pasantias.com / 123456")
-  console.log("   Estudiante: estudiante2@pasantias.com / 123456")
+  console.log("\n🎉 Seed completado!")
+  console.log("\n📧 Credenciales:")
+  console.log("   Admin:        admin@pasantias.com / 123456")
+  console.log("   Empresa:      techcorp@pasantias.com / 123456")
+  console.log("   Empresa:      estudio@pasantias.com / 123456")
+  console.log("   Estudiante:   estudiante1@pasantias.com / 123456")
+  console.log("   Estudiante:   estudiante2@pasantias.com / 123456")
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  .catch((e) => { console.error(e); process.exit(1) })
+  .finally(async () => { await prisma.$disconnect() })

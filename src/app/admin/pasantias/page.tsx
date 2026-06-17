@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import { TogglePasantiaButton } from "./toggle-button"
+import { ESTADOS_PASANTIA } from "@/lib/constants"
 
 export default async function AdminPasantiasPage() {
   const session = await auth()
@@ -13,8 +13,8 @@ export default async function AdminPasantiasPage() {
 
   const pasantias = await prisma.pasantia.findMany({
     include: {
-      institucion: { select: { name: true } },
-      _count: { select: { postulaciones: true, resenas: true } },
+      empresa: { select: { nombre: true } },
+      _count: { select: { postulaciones: true } },
     },
     orderBy: { createdAt: "desc" },
   })
@@ -30,7 +30,7 @@ export default async function AdminPasantiasPage() {
               <thead>
                 <tr className="border-b text-left">
                   <th className="pb-3 font-medium">Título</th>
-                  <th className="pb-3 font-medium">Institución</th>
+                  <th className="pb-3 font-medium">Empresa</th>
                   <th className="pb-3 font-medium">Área</th>
                   <th className="pb-3 font-medium">Estado</th>
                   <th className="pb-3 font-medium">Activo</th>
@@ -40,34 +40,31 @@ export default async function AdminPasantiasPage() {
                 </tr>
               </thead>
               <tbody>
-                {pasantias.map((p) => (
-                  <tr key={p.id} className="border-b last:border-0">
-                    <td className="py-3 font-medium">{p.titulo}</td>
-                    <td className="py-3 text-gray-500">{p.institucion.name}</td>
-                    <td className="py-3"><Badge>{p.area}</Badge></td>
-                    <td className="py-3">
-                      {p.estado === "ABIERTA" ? (
-                        <Badge variant="success">Abierta</Badge>
-                      ) : p.estado === "EN_CURSO" ? (
-                        <Badge variant="default">En curso</Badge>
-                      ) : (
-                        <Badge variant="secondary">Cerrada</Badge>
-                      )}
-                    </td>
-                    <td className="py-3">
-                      {p.activo ? (
-                        <Badge variant="success">Sí</Badge>
-                      ) : (
-                        <Badge variant="destructive">No</Badge>
-                      )}
-                    </td>
-                    <td className="py-3">{p._count.postulaciones}</td>
-                    <td className="py-3 text-xs text-gray-400">{formatDate(p.createdAt)}</td>
-                    <td className="py-3">
-                      <TogglePasantiaButton pasantiaId={p.id} activo={p.activo} titulo={p.titulo} />
-                    </td>
-                  </tr>
-                ))}
+                {pasantias.map((p) => {
+                  const estado = ESTADOS_PASANTIA[p.estado] || ESTADOS_PASANTIA.BORRADOR
+                  return (
+                    <tr key={p.id} className="border-b last:border-0">
+                      <td className="py-3 font-medium">{p.titulo}</td>
+                      <td className="py-3 text-gray-500">{p.empresa.nombre}</td>
+                      <td className="py-3"><Badge>{p.area}</Badge></td>
+                      <td className="py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estado.color}`}>{estado.label}</span>
+                      </td>
+                      <td className="py-3">
+                        {p.activo ? (
+                          <Badge variant="success">Sí</Badge>
+                        ) : (
+                          <Badge variant="destructive">No</Badge>
+                        )}
+                      </td>
+                      <td className="py-3">{p._count.postulaciones}</td>
+                      <td className="py-3 text-xs text-gray-400">{formatDate(p.createdAt)}</td>
+                      <td className="py-3">
+                        <TogglePasantiaButton pasantiaId={p.id} activo={p.activo} titulo={p.titulo} />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { BanUserButton } from "../ban-button"
 import Link from "next/link"
-import { ArrowLeft, Shield, Mail, Phone, Calendar, BookOpen, FileText, Building2 } from "lucide-react"
+import { ArrowLeft, Shield, Mail, Phone, Calendar, FileText, Building2 } from "lucide-react"
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -17,15 +17,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const user = await prisma.user.findUnique({
     where: { id },
     include: {
-      institucion: true,
-      _count: { select: { pasantias: true, postulaciones: true, documentos: true } },
+      empresa: true,
+      universidad: true,
+      carrera: { include: { facultad: { include: { universidad: true } } } },
+      _count: { select: { postulaciones: true, documentos: true } },
     },
   })
   if (!user) redirect("/admin/usuarios")
 
   const auditoria = await prisma.auditLog.findMany({
     where: { usuarioId: id },
-    orderBy: { createdAt: "desc" },
+    orderBy: { fecha: "desc" },
     take: 50,
   })
 
@@ -43,10 +45,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 {user.name}
                 <Badge variant={
                   user.role === "ADMIN" ? "destructive" :
-                  user.role === "INSTITUCION" ? "default" : "secondary"
+                  user.role === "EMPRESA" ? "default" : "secondary"
                 }>
                   {user.role === "ESTUDIANTE" ? "Estudiante" :
-                   user.role === "INSTITUCION" ? "Institución" : "Admin"}
+                   user.role === "EMPRESA" ? "Empresa" : "Admin"}
                 </Badge>
                 {user.baneado && <Badge variant="destructive">Baneado</Badge>}
               </CardTitle>
@@ -58,14 +60,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               {user.dni && <div>DNI: {user.dni}</div>}
               {user.fechaNacimiento && <div>Fecha nac.: {formatDate(user.fechaNacimiento)}</div>}
               {user.direccion && <div>Dirección: {user.direccion}</div>}
-              {user.asisteA && <div className="flex items-center gap-2"><BookOpen size={14} className="text-gray-400" /> {user.asisteA}{user.carrera ? ` - ${user.carrera}` : ""}</div>}
+              {user.carrera && <div className="flex items-center gap-2"><Building2 size={14} className="text-gray-400" /> {user.carrera.facultad.universidad.nombre} - {user.carrera.facultad.nombre} - {user.carrera.nombre}</div>}
               {user.legajo && <div>Legajo: {user.legajo}</div>}
               {user.anioCursada && <div>Año cursada: {user.anioCursada}</div>}
               {user.promedio && <div>Promedio: {user.promedio}</div>}
-              {user.institucion && (
-                <div className="flex items-center gap-2"><Building2 size={14} className="text-gray-400" /> {user.institucion.nombre}</div>
+              {user.empresa && (
+                <div className="flex items-center gap-2"><Building2 size={14} className="text-gray-400" /> Empresa: {user.empresa.nombre}</div>
               )}
-              <div className="flex items-center gap-2"><FileText size={14} className="text-gray-400" /> {user._count.pasantias} pasantías, {user._count.postulaciones} postulaciones, {user._count.documentos} documentos</div>
+              {user.universidad && (
+                <div className="flex items-center gap-2"><Building2 size={14} className="text-blue-400" /> Universidad: {user.universidad.nombre}</div>
+              )}
+              <div className="flex items-center gap-2"><FileText size={14} className="text-gray-400" /> {user._count.postulaciones} postulaciones, {user._count.documentos} documentos</div>
             </CardContent>
           </Card>
 
@@ -80,7 +85,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 <div className="space-y-2">
                   {auditoria.map((log) => (
                     <div key={log.id} className="flex items-start gap-3 text-sm border-b pb-2 last:border-0">
-                      <span className="text-xs text-gray-400 whitespace-nowrap mt-0.5">{formatDate(log.createdAt)}</span>
+                      <span className="text-xs text-gray-400 whitespace-nowrap mt-0.5">{formatDate(log.fecha)}</span>
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                         log.accion === "LOGIN" ? "bg-blue-100 text-blue-700" :
                         log.accion === "REGISTRO" ? "bg-green-100 text-green-700" :

@@ -16,7 +16,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const target = await prisma.user.findUnique({ where: { id } })
     if (target) {
       await logAudit(session.user.id, "BANEAR",
-        `${data.baneado ? "Baneó" : "Desbaneó"} a ${target.name} (${target.email})`)
+        `${data.baneado ? "Baneó" : "Desbaneó"} a ${target.name} (${target.email})`,
+        "User", id)
     }
   }
 
@@ -34,7 +35,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const target = await prisma.user.findUnique({ where: { id } })
   if (target) {
     await logAudit(session.user.id, "ELIMINAR_USUARIO",
-      `Eliminó a ${target.name} (${target.email})`)
+      `Eliminó a ${target.name} (${target.email})`, "User", id)
   }
 
   await prisma.user.delete({ where: { id } })

@@ -5,7 +5,7 @@ import { logAudit } from "@/lib/audit"
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, institucionNombre, dni, fechaNacimiento, direccion, asisteA, carrera, legajo, anioCursada, promedio } = await req.json()
+    const { name, email, password, role, ...extra } = await req.json()
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 })
@@ -18,41 +18,46 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    let institucionId: string | undefined
-
-    if (role === "INSTITUCION") {
-      if (!institucionNombre) {
-        return NextResponse.json({ error: "Nombre de institución requerido" }, { status: 400 })
-      }
-
-      const institucion = await prisma.institucion.create({
-        data: {
-          nombre: institucionNombre,
-          email,
-        },
-      })
-      institucionId = institucion.id
+    const userData: any = {
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "ESTUDIANTE",
+      dni: extra.dni || undefined,
+      fechaNacimiento: extra.fechaNacimiento ? new Date(extra.fechaNacimiento) : undefined,
+      direccion: extra.direccion || undefined,
+      legajo: extra.legajo || undefined,
+      anioCursada: extra.anioCursada || undefined,
+      promedio: extra.promedio || undefined,
     }
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || "ESTUDIANTE",
-        institucionId,
-        dni: dni || undefined,
-        fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : undefined,
-        direccion: direccion || undefined,
-        asisteA: asisteA || undefined,
-        carrera: carrera || undefined,
-        legajo: legajo || undefined,
-        anioCursada: anioCursada || undefined,
-        promedio: promedio || undefined,
-      },
-    })
+    if (role === "EMPRESA") {
+      if (!extra.empresaNombre || !extra.cuit) {
+        return NextResponse.json({ error: "Nombre de empresa y CUIT requeridos" }, { status: 400 })
+      }
+      const empresa = await prisma.empresa.create({
+        data: { nombre: extra.empresaNombre, cuit: extra.cuit, direccion: extra.direccion, email },
+      })
+      userData.empresaId = empresa.id
+    }
 
-    await logAudit(user.id, "REGISTRO", `Usuario ${role} registrado: ${email}`)
+    if (role === "UNIVERSIDAD") {
+      if (!extra.universidadNombre) {
+        return NextResponse.json({ error: "Nombre de universidad requerido" }, { status: 400 })
+      }
+      const universidad = await prisma.universidad.create({
+        data: { nombre: extra.universidadNombre, email },
+      })
+      userData.universidadId = universidad.id
+    }
+
+    if (role === "ESTUDIANTE") {
+      userData.carreraId = extra.carreraId || undefined
+    }
+
+    const user = await prisma.user.create({ data: userData })
+
+    await logAudit(user.id, "REGISTRO", `Usuario ${role} registrado: ${email}`, "User", user.id)
 
     return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
   } catch (error) {

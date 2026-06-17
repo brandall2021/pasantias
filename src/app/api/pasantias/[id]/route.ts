@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -8,9 +8,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const pasantia = await prisma.pasantia.findUnique({
     where: { id },
     include: {
-      institucion: { select: { name: true, image: true } },
-      resenas: {
-        include: { emisor: { select: { name: true } } },
+      empresa: { select: { nombre: true, logo: true } },
+      postulaciones: {
+        include: {
+          alumno: { select: { name: true, email: true } },
+          convenio: true,
+        },
       },
     },
   })
@@ -23,17 +26,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
   const { id } = await params
-
-  const existing = await prisma.pasantia.findUnique({ where: { id } })
+  const existing = await prisma.pasantia.findUnique({
+    where: { id },
+    include: { empresa: { select: { id: true } } },
+  })
   if (!existing) return NextResponse.json({ error: "No encontrada" }, { status: 404 })
-  if (existing.institucionId !== session.user.id && session.user.role !== "ADMIN") {
+
+  const userEmpresaId = (session.user as any).empresaId
+  if (existing.empresaId !== userEmpresaId && session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
   const data = await req.json()
   const pasantia = await prisma.pasantia.update({ where: { id }, data })
-
-  await logAudit(session.user.id, "MODIFICAR_PASANTIA", `Editó pasantía: ${pasantia.titulo}`)
-
+  await logAudit(session.user.id, "EDITAR_PASANTIA", `Editó pasantía: ${pasantia.titulo}`, "Pasantia", id)
   return NextResponse.json(pasantia)
 }

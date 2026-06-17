@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, Briefcase, Building2, Flag, Shield } from "lucide-react"
+import { Users, Briefcase, Building2, Shield } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminPage() {
@@ -11,16 +11,15 @@ export default async function AdminPage() {
 
   const stats = await Promise.all([
     prisma.user.count(),
-    prisma.user.count({ where: { role: "INSTITUCION" } }),
+    prisma.user.count({ where: { role: "EMPRESA" } }),
     prisma.user.count({ where: { role: "ESTUDIANTE" } }),
     prisma.pasantia.count({ where: { activo: true } }),
     prisma.pasantia.count(),
     prisma.postulacion.count(),
     prisma.postulacion.count({ where: { estado: "PENDIENTE" } }),
-    prisma.report.count({ where: { estado: "PENDIENTE" } }),
   ])
 
-  const [totalUsuarios, totalInstituciones, totalEstudiantes, pasantiasActivas, totalPasantias, totalPostulaciones, postulacionesPendientes, reportesPendientes] = stats
+  const [totalUsuarios, totalEmpresas, totalEstudiantes, pasantiasActivas, totalPasantias, totalPostulaciones, postulacionesPendientes] = stats
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -43,8 +42,8 @@ export default async function AdminPage() {
             <div className="flex items-center gap-3">
               <Building2 size={24} className="text-purple-600" />
               <div>
-                <p className="text-2xl font-bold">{totalInstituciones}</p>
-                <p className="text-sm text-gray-500">Instituciones</p>
+                <p className="text-2xl font-bold">{totalEmpresas}</p>
+                <p className="text-sm text-gray-500">Empresas</p>
               </div>
             </div>
           </CardContent>
@@ -63,10 +62,10 @@ export default async function AdminPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <Flag size={24} className="text-red-600" />
+              <Briefcase size={24} className="text-orange-600" />
               <div>
-                <p className="text-2xl font-bold">{reportesPendientes}</p>
-                <p className="text-sm text-gray-500">Reportes pendientes</p>
+                <p className="text-2xl font-bold">{totalPostulaciones}</p>
+                <p className="text-sm text-gray-500">Postulaciones totales</p>
               </div>
             </div>
           </CardContent>
@@ -80,7 +79,7 @@ export default async function AdminPage() {
               <Users size={24} className="text-blue-600" />
               <div>
                 <h3 className="font-semibold">Usuarios</h3>
-                <p className="text-sm text-gray-500">{totalUsuarios} registrados ({totalEstudiantes} estudiantes, {totalInstituciones} instituciones)</p>
+                <p className="text-sm text-gray-500">{totalUsuarios} registrados ({totalEstudiantes} estudiantes, {totalEmpresas} empresas)</p>
               </div>
             </CardContent>
           </Card>

@@ -12,13 +12,14 @@ export default async function MisPostulacionesPage() {
   if (!session?.user || session.user.role !== "ESTUDIANTE") redirect("/login")
 
   const postulaciones = await prisma.postulacion.findMany({
-    where: { estudianteId: session.user.id },
+    where: { alumnoId: session.user.id },
     include: {
       pasantia: {
         select: { id: true, titulo: true, area: true, modalidad: true, becaEconomica: true },
       },
+      convenio: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { fecha: "desc" },
   })
 
   const estados: Record<string, { label: string; color: string }> = {
@@ -53,19 +54,19 @@ export default async function MisPostulacionesPage() {
                           <Badge variant="secondary">{p.pasantia.area}</Badge>
                           <Badge variant="secondary">{p.pasantia.modalidad}</Badge>
                         </div>
-                        {p.cvUrl && (
-                          <p className="text-xs text-gray-400 mt-1">CV adjunto</p>
+                        {p.pasantia.becaEconomica && (
+                          <p className="text-xs text-gray-400 mt-1">Beca: ${p.pasantia.becaEconomica}</p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
-                          Postulado el {formatDate(p.createdAt)}
+                          Postulado el {formatDate(p.fecha)}
                         </p>
                         {p.estado === "ACEPTADO" && (
                           <div className="mt-3 pt-3 border-t" onClick={(e) => e.preventDefault()}>
                             <p className="text-xs font-medium text-gray-700 mb-2">Convenio Tripartito</p>
                             <ConvenioUpload
                               postulacionId={p.id}
-                              convenioUrl={(p as any).convenioEstudianteUrl}
-                              parte="estudiante"
+                              firmado={p.convenio?.firmaAlumno || false}
+                              parte="alumno"
                               label="Tu firma"
                             />
                           </div>

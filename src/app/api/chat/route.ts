@@ -9,49 +9,39 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { receptorId, contenido, pasantiaId } = await req.json()
+    const { postulacionId, texto } = await req.json()
 
-    if (!receptorId || !contenido) {
+    if (!postulacionId || !texto) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 })
     }
 
-    let chat = await prisma.chat.findFirst({
-      where: {
-        OR: [
-          { creadorId: session.user.id, participanteId: receptorId },
-          { creadorId: receptorId, participanteId: session.user.id },
-        ],
-      },
+    let conversacion = await prisma.conversacion.findUnique({
+      where: { postulacionId },
     })
 
-    if (!chat) {
-      chat = await prisma.chat.create({
-        data: {
-          creadorId: session.user.id,
-          participanteId: receptorId,
-          pasantiaId: pasantiaId || null,
-        },
+    if (!conversacion) {
+      conversacion = await prisma.conversacion.create({
+        data: { postulacionId },
       })
     }
 
     const mensaje = await prisma.mensaje.create({
       data: {
-        chatId: chat.id,
-        emisorId: session.user.id,
-        receptorId,
-        contenido,
+        conversacionId: conversacion.id,
+        autorId: session.user.id,
+        texto,
       },
       include: {
-        emisor: { select: { id: true, name: true, image: true } },
+        autor: { select: { id: true, name: true, image: true } },
       },
     })
 
-    await prisma.chat.update({
-      where: { id: chat.id },
+    await prisma.conversacion.update({
+      where: { id: conversacion.id },
       data: { updatedAt: new Date() },
     })
 
-    return NextResponse.json({ chat, mensaje })
+    return NextResponse.json({ conversacion, mensaje })
   } catch {
     return NextResponse.json({ error: "Error al enviar mensaje" }, { status: 500 })
   }
@@ -63,23 +53,30 @@ export async function GET() {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 })
   }
 
-  const chats = await prisma.chat.findMany({
+  const conversaciones = await prisma.conversacion.findMany({
     where: {
-      OR: [
-        { creadorId: session.user.id },
-        { participanteId: session.user.id },
-      ],
+      postulacion: {
+        OR: [
+          { alumnoId: session.user.id },
+          { pasantia: { empresa: { usuarios: { some: { id: session.user.id } } } } },
+        ],
+      },
     },
     include: {
-      creador: { select: { id: true, name: true, image: true } },
-      participante: { select: { id: true, name: true, image: true } },
+      postulacion: {
+        select: {
+          id: true,
+          alumnoId: true,
+          pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
+        },
+      },
       mensajes: {
-        orderBy: { createdAt: "desc" },
+        orderBy: { fecha: "desc" },
         take: 1,
       },
     },
     orderBy: { updatedAt: "desc" },
   })
 
-  return NextResponse.json(chats)
+  return NextResponse.json(conversaciones)
 }

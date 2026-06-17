@@ -5,7 +5,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 
 export function UpdateProfileForm({ user }: { user: any }) {
   const router = useRouter()
@@ -24,7 +23,6 @@ export function UpdateProfileForm({ user }: { user: any }) {
         id: user.id,
         name: formData.get("name"),
         phone: formData.get("phone") || undefined,
-        institucionNombre: formData.get("institucionNombre") || undefined,
         direccion: formData.get("direccion") || undefined,
       }
 
@@ -32,8 +30,6 @@ export function UpdateProfileForm({ user }: { user: any }) {
         body.dni = formData.get("dni") || undefined
         body.fechaNacimiento = formData.get("fechaNacimiento") || undefined
         body.direccion = formData.get("direccion") || undefined
-        body.asisteA = formData.get("asisteA") || undefined
-        body.carrera = formData.get("carrera") || undefined
         body.legajo = formData.get("legajo") || undefined
         body.anioCursada = formData.get("anioCursada") || undefined
         body.promedio = formData.get("promedio") || undefined
@@ -48,6 +44,8 @@ export function UpdateProfileForm({ user }: { user: any }) {
       if (res.ok) {
         setMessage("Perfil actualizado")
         router.refresh()
+      } else {
+        setMessage("Error al actualizar")
       }
     } catch {
       setMessage("Error al actualizar")
@@ -74,15 +72,16 @@ export function UpdateProfileForm({ user }: { user: any }) {
         <Label htmlFor="phone">Teléfono</Label>
         <Input id="phone" name="phone" defaultValue={user.phone || ""} />
       </div>
-      {user.role === "INSTITUCION" && user.institucion && (
+
+      {user.role === "EMPRESA" && user.empresa && (
         <>
           <div className="space-y-2">
-            <Label htmlFor="institucionNombre">Nombre de institución</Label>
-            <Input id="institucionNombre" name="institucionNombre" defaultValue={user.institucion.nombre} />
+            <Label>Empresa</Label>
+            <Input value={user.empresa.nombre} disabled className="bg-gray-50" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="direccion">Dirección</Label>
-            <Input id="direccion" name="direccion" defaultValue={user.institucion.direccion || ""} />
+            <Input id="direccion" name="direccion" defaultValue={user.empresa.direccion || ""} />
           </div>
         </>
       )}
@@ -106,16 +105,14 @@ export function UpdateProfileForm({ user }: { user: any }) {
           </div>
 
           <div className="border-t pt-4 mt-2">
-            <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos e institucionales</p>
+            <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos</p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="asisteA">Institución educativa</Label>
-            <Input id="asisteA" name="asisteA" defaultValue={user.asisteA || ""} placeholder="Universidad, escuela, facultad" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="carrera">Carrera / Especialidad</Label>
-            <Input id="carrera" name="carrera" defaultValue={user.carrera || ""} placeholder="Programa de estudios actual" />
-          </div>
+          {user.carrera && (
+            <div className="space-y-2">
+              <Label>Carrera</Label>
+              <Input value={user.carrera.nombre || ""} disabled className="bg-gray-50" />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="legajo">N° de matrícula / Legajo</Label>
             <Input id="legajo" name="legajo" defaultValue={user.legajo || ""} placeholder="Identificador único del alumno" />

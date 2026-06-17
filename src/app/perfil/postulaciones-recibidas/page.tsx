@@ -9,15 +9,17 @@ import { UpdatePostulacionEstado } from "./update-estado"
 
 export default async function PostulacionesRecibidasPage() {
   const session = await auth()
-  if (!session?.user || session.user.role !== "INSTITUCION") redirect("/login")
+  if (!session?.user || session.user.role !== "EMPRESA") redirect("/login")
+  if (!session.user.empresaId) redirect("/perfil")
 
   const postulaciones = await prisma.postulacion.findMany({
-    where: { pasantia: { institucionId: session.user.id } },
+    where: { pasantia: { empresaId: session.user.empresaId } },
     include: {
-      estudiante: { select: { name: true, email: true } },
+      alumno: { select: { name: true, email: true } },
       pasantia: { select: { titulo: true } },
+      convenio: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { fecha: "desc" },
   })
 
   const estados: Record<string, { label: string; color: string }> = {
@@ -57,18 +59,18 @@ export default async function PostulacionesRecibidasPage() {
                     const estado = estados[p.estado] || estados.PENDIENTE
                     return (
                       <tr key={p.id} className="border-b last:border-0">
-                        <td className="py-3">{p.estudiante.name}<br /><span className="text-xs text-gray-400">{p.estudiante.email}</span></td>
+                        <td className="py-3">{p.alumno.name}<br /><span className="text-xs text-gray-400">{p.alumno.email}</span></td>
                         <td className="py-3">{p.pasantia.titulo}</td>
                         <td className="py-3">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estado.color}`}>{estado.label}</span>
                         </td>
                         <td className="py-3 min-w-[180px]">
                           <div className="space-y-2">
-                            <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEstudianteUrl} parte="estudiante" label="Estudiante" disabled />
-                            <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEmpresaUrl} parte="empresa" label="Mi empresa" />
+                            <ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaAlumno || false} parte="alumno" label="Estudiante" disabled />
+                            <ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaEmpresa || false} parte="empresa" label="Mi empresa" />
                           </div>
                         </td>
-                        <td className="py-3 text-xs text-gray-400">{formatDate(p.createdAt)}</td>
+                        <td className="py-3 text-xs text-gray-400">{formatDate(p.fecha)}</td>
                         <td className="py-3">
                           <UpdatePostulacionEstado postulacionId={p.id} estado={p.estado} />
                         </td>

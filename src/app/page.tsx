@@ -3,30 +3,28 @@ import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Search, Building2, Users, Briefcase, Star, ArrowRight } from "lucide-react"
+import { Search, Users, Star, ArrowRight, Building2 } from "lucide-react"
 
 async function getFeaturedData() {
   const pasantias = await prisma.pasantia.findMany({
-    where: { activo: true, estado: "ABIERTA" },
+    where: { activo: true, estado: "PUBLICADA" },
     include: {
-      institucion: { select: { name: true } },
-      resenas: { select: { puntuacion: true } },
+      empresa: { select: { nombre: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 6,
   })
 
-  const instituciones = await prisma.user.findMany({
-    where: { role: "INSTITUCION" },
-    include: { institucion: true, pasantias: { where: { activo: true } } },
+  const empresas = await prisma.empresa.findMany({
+    include: { _count: { select: { pasantias: { where: { activo: true } } } } },
     take: 4,
   })
 
-  return { pasantias, instituciones }
+  return { pasantias, empresas }
 }
 
 export default async function Home() {
-  const { pasantias, instituciones } = await getFeaturedData()
+  const { pasantias, empresas } = await getFeaturedData()
 
   return (
     <div>
@@ -37,7 +35,7 @@ export default async function Home() {
               Encontrá la pasantía ideal para tu futuro
             </h1>
             <p className="text-lg text-blue-100 mb-8">
-              Conectamos estudiantes con instituciones para impulsar su desarrollo profesional.
+              Conectamos estudiantes con empresas para impulsar su desarrollo profesional.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/pasantias">
@@ -109,7 +107,7 @@ export default async function Home() {
                       <Badge variant="secondary">{p.modalidad}</Badge>
                     </div>
                     <h3 className="font-semibold mb-1">{p.titulo}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{p.institucion.name}</p>
+                    <p className="text-sm text-gray-500 mb-3">{p.empresa.nombre}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-400">
                       {p.becaEconomica && <span>${p.becaEconomica}</span>}
                       {p.duracion && <span>· {p.duracion}</span>}
@@ -124,22 +122,22 @@ export default async function Home() {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-center mb-8">Instituciones destacadas</h2>
+          <h2 className="text-2xl font-bold text-center mb-8">Empresas destacadas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {instituciones.map((inst) => (
-              <Link key={inst.id} href={`/instituciones/${inst.id}`}>
+            {empresas.map((emp) => (
+              <div key={emp.id}>
                 <Card className="text-center hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="pt-6">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Building2 className="text-blue-600" size={28} />
                     </div>
-                    <h3 className="font-semibold">{inst.institucion?.nombre || inst.name}</h3>
+                    <h3 className="font-semibold">{emp.nombre}</h3>
                     <p className="text-sm text-gray-400 mt-1">
-                      {inst.pasantias.length} pasantía{inst.pasantias.length !== 1 ? "s" : ""}
+                      {emp._count.pasantias} pasantía{emp._count.pasantias !== 1 ? "s" : ""}
                     </p>
                   </CardContent>
                 </Card>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

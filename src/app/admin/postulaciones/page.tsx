@@ -4,7 +4,6 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { ConvenioUpload } from "@/components/convenio-upload"
 
 export default async function AdminPostulacionesPage() {
   const session = await auth()
@@ -12,10 +11,11 @@ export default async function AdminPostulacionesPage() {
 
   const postulaciones = await prisma.postulacion.findMany({
     include: {
-      estudiante: { select: { name: true, email: true } },
-      pasantia: { select: { titulo: true, institucionId: true } },
+      alumno: { select: { name: true, email: true } },
+      pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
+      convenio: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { fecha: "desc" },
     take: 100,
   })
 
@@ -37,37 +37,32 @@ export default async function AdminPostulacionesPage() {
                 <tr className="border-b text-left">
                   <th className="pb-3 font-medium">Estudiante</th>
                   <th className="pb-3 font-medium">Pasantía</th>
+                  <th className="pb-3 font-medium">Empresa</th>
                   <th className="pb-3 font-medium">Estado</th>
                   <th className="pb-3 font-medium">Convenio</th>
-                  <th className="pb-3 font-medium">CV</th>
                   <th className="pb-3 font-medium">Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {postulaciones.map((p) => {
                   const estado = estados[p.estado] || estados.PENDIENTE
+                  const firmas = p.convenio
+                    ? [
+                        p.convenio.firmaAlumno ? "Al." : "",
+                        p.convenio.firmaEmpresa ? "Emp." : "",
+                        p.convenio.firmaUniversidad ? "Univ." : "",
+                      ].filter(Boolean).join(" · ") || "Pendiente"
+                    : "Sin convenio"
                   return (
                     <tr key={p.id} className="border-b last:border-0">
-                      <td className="py-3">{p.estudiante.name}<br /><span className="text-xs text-gray-400">{p.estudiante.email}</span></td>
+                      <td className="py-3">{p.alumno.name}<br /><span className="text-xs text-gray-400">{p.alumno.email}</span></td>
                       <td className="py-3">{p.pasantia.titulo}</td>
+                      <td className="py-3 text-xs">{p.pasantia.empresa.nombre}</td>
                       <td className="py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estado.color}`}>{estado.label}</span>
                       </td>
-                      <td className="py-3 min-w-[180px]">
-                        <div className="space-y-2">
-                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEstudianteUrl} parte="estudiante" label="Estudiante" />
-                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEmpresaUrl} parte="empresa" label="Empresa" />
-                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioInstitucionUrl} parte="institucion" label="Institución" />
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        {p.cvUrl ? (
-                          <a href={p.cvUrl} target="_blank" className="text-blue-600 hover:underline text-xs">Ver CV</a>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="py-3 text-xs text-gray-400">{formatDate(p.createdAt)}</td>
+                      <td className="py-3 text-xs">{firmas}</td>
+                      <td className="py-3 text-xs text-gray-400">{formatDate(p.fecha)}</td>
                     </tr>
                   )
                 })}

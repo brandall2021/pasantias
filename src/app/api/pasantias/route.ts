@@ -1,68 +1,29 @@
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
-import { logAudit } from "@/lib/audit"
-import { sendEmail, pasantiaNotificationEmail } from "@/lib/email"
+import { PasantiaService } from "@/services/pasantia.service"
+import { auth } from "@/lib/auth"
 
 export async function GET() {
-  const pasantias = await prisma.pasantia.findMany({
-    where: { activo: true },
-    include: {
-      institucion: { select: { name: true, id: true } },
-      _count: { select: { postulaciones: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+  const pasantias = await PasantiaService.listarPublicadas()
   return NextResponse.json(pasantias)
 }
 
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  if (session.user.role !== "EMPRESA") {
+    return NextResponse.json({ error: "Solo empresas pueden crear pasantías" }, { status: 403 })
+  }
 
   try {
     const data = await req.json()
-    const pasantia = await prisma.pasantia.create({
-      data: {
-        titulo: data.titulo,
-        descripcion: data.descripcion,
-        requisitos: data.requisitos,
-        area: data.area,
-        modalidad: data.modalidad,
-        duracion: data.duracion,
-        becaEconomica: data.becaEconomica,
-        cargaHoraria: data.cargaHoraria,
-        vacantes: parseInt(data.vacantes) || 1,
-        institucionId: data.institucionId,
-        unidadAcademicaId: data.unidadAcademicaId || null,
-      },
-      include: {
-        unidadAcademica: { select: { nombre: true, email: true } },
-        institucion: { select: { name: true } },
-      },
+    const pasantia = await PasantiaService.crear({
+      ...data,
+      vacantes: parseInt(data.vacantes) || 1,
+      empresaId: (session.user as any).empresaId,
+      usuarioId: session.user.id,
     })
-
-    await logAudit(session.user.id, "CREAR_PASANTIA", `Creó pasantía: ${pasantia.titulo}`)
-
-    if (pasantia.unidadAcademica?.email) {
-      const emailContent = pasantiaNotificationEmail({
-        titulo: pasantia.titulo,
-        descripcion: pasantia.descripcion,
-        area: pasantia.area,
-        modalidad: pasantia.modalidad,
-        duracion: pasantia.duracion || undefined,
-        becaEconomica: pasantia.becaEconomica || undefined,
-        empresa: pasantia.institucion.name,
-      })
-      await sendEmail({
-        to: pasantia.unidadAcademica.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-      })
-    }
-
     return NextResponse.json(pasantia)
-  } catch (error) {
-    return NextResponse.json({ error: "Error al crear pasantía" }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Error al crear pasantía" }, { status: 500 })
   }
 }

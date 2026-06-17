@@ -11,16 +11,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params
 
   const mensajes = await prisma.mensaje.findMany({
-    where: { chatId: id },
+    where: { conversacionId: id },
     include: {
-      emisor: { select: { id: true, name: true, image: true } },
+      autor: { select: { id: true, name: true, image: true } },
     },
-    orderBy: { createdAt: "asc" },
-  })
-
-  await prisma.mensaje.updateMany({
-    where: { chatId: id, receptorId: session.user.id, leido: false },
-    data: { leido: true },
+    orderBy: { fecha: "asc" },
   })
 
   return NextResponse.json(mensajes)
@@ -33,21 +28,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const { id } = await params
-  const { contenido, receptorId } = await req.json()
+  const { texto } = await req.json()
 
   const mensaje = await prisma.mensaje.create({
     data: {
-      chatId: id,
-      emisorId: session.user.id,
-      receptorId,
-      contenido,
+      conversacionId: id,
+      autorId: session.user.id,
+      texto,
     },
     include: {
-      emisor: { select: { id: true, name: true, image: true } },
+      autor: { select: { id: true, name: true, image: true } },
     },
   })
 
-  await prisma.chat.update({
+  await prisma.conversacion.update({
     where: { id },
     data: { updatedAt: new Date() },
   })
