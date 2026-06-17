@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
   }
 
-  if (!["ANALITICO", "TITULO", "CERTIFICADO", "OTRO"].includes(tipo)) {
+  if (!["CV", "ALUMNO_REGULAR", "ANALITICO_PARCIAL", "SALUD", "OTRO"].includes(tipo)) {
     return NextResponse.json({ error: "Tipo inválido" }, { status: 400 })
   }
 

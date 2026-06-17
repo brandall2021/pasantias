@@ -117,7 +117,9 @@ model Postulacion {
   pasantia       Pasantia           @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
 
   estudianteId   String
-  estudiante     User               @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudiante     User         @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+
+  documentos     Documento[]
 
   @@unique([pasantiaId, estudianteId])
 }
@@ -171,13 +173,15 @@ model Resena {
 model Documento {
   id        String   @id @default(cuid())
   nombre    String
-  tipo      String   // ANALITICO, TITULO, CERTIFICADO, OTRO
+  tipo      String   // CV, ALUMNO_REGULAR, ANALITICO_PARCIAL, SALUD, OTRO
   url       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  usuarioId String
-  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId    String
+  usuario      User       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  postulacionId String?
+  postulacion  Postulacion? @relation(fields: [postulacionId], references: [id], onDelete: SetNull)
 }
 
 model Report {

@@ -18,16 +18,18 @@ interface Documento {
 }
 
 const TIPOS = [
-  { value: "ANALITICO", label: "Analítico" },
-  { value: "TITULO", label: "Título" },
-  { value: "CERTIFICADO", label: "Certificado" },
+  { value: "CV", label: "Currículum Vitae" },
+  { value: "ALUMNO_REGULAR", label: "Certificado de alumno regular" },
+  { value: "ANALITICO_PARCIAL", label: "Certificado analítico parcial" },
+  { value: "SALUD", label: "Certificado de salud psicofísica" },
   { value: "OTRO", label: "Otro" },
 ]
 
 const TIPO_COLORS: Record<string, string> = {
-  ANALITICO: "bg-blue-100 text-blue-800",
-  TITULO: "bg-green-100 text-green-800",
-  CERTIFICADO: "bg-purple-100 text-purple-800",
+  CV: "bg-blue-100 text-blue-800",
+  ALUMNO_REGULAR: "bg-green-100 text-green-800",
+  ANALITICO_PARCIAL: "bg-purple-100 text-purple-800",
+  SALUD: "bg-teal-100 text-teal-800",
   OTRO: "bg-gray-100 text-gray-800",
 }
 
@@ -139,7 +141,7 @@ export default function DocumentosPage() {
           <CardContent className="pt-6 text-center text-gray-500 py-12">
             <FileText size={48} className="mx-auto mb-3 text-gray-300" />
             <p>No tenés documentos cargados</p>
-            <p className="text-sm">Agregá tu analítico, título o certificados</p>
+            <p className="text-sm">Agregá tu CV, certificado de alumno regular, analítico parcial, etc.</p>
           </CardContent>
         </Card>
       ) : (
