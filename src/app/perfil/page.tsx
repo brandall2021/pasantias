@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { User, Mail, Building2, FileText, ClipboardList } from "lucide-react"
 import Link from "next/link"
 import { UpdateProfileForm } from "./update-profile-form"
+import { CambiarPasswordForm } from "./cambiar-password-form"
 
 export default async function PerfilPage() {
   const session = await auth()
@@ -33,6 +34,12 @@ export default async function PerfilPage() {
           <UpdateProfileForm user={user} />
         </CardContent>
       </Card>
+
+      {!user.image && (
+        <div className="mt-6">
+          <CambiarPasswordForm />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         {user.role === "EMPRESA" && (
