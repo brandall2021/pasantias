@@ -74,3 +74,26 @@ export function pasantiaNotificationEmail({
     `,
   }
 }
+
+export function resetPasswordEmail({ name, url }: { name: string; url: string }) {
+  return {
+    subject: "Recuperación de contraseña - Sistema de Pasantías",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a56db;">Recuperación de contraseña</h2>
+        <p>Hola <strong>${name}</strong>,</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+        <p>Hacé clic en el siguiente enlace para crear una nueva contraseña:</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${url}" style="display: inline-block; padding: 12px 24px; background-color: #1a56db; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Restablecer contraseña
+          </a>
+        </div>
+        <p style="color: #6b7280; font-size: 14px;">Este enlace expira en 1 hora.</p>
+        <p style="color: #6b7280; font-size: 14px;">Si no solicitaste este cambio, ignorá este mensaje.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #9ca3af;">Sistema de Pasantías</p>
+      </div>
+    `,
+  }
+}

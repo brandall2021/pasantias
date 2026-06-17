@@ -61,6 +61,9 @@ export default function LoginPage() {
               <Label htmlFor="password">Contraseña</Label>
               <Input id="password" name="password" type="password" required placeholder="••••••••" />
             </div>
+            <div className="flex justify-end">
+              <Link href="/recuperar" className="text-xs text-blue-600 hover:underline">¿Olvidaste tu contraseña?</Link>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Ingresando..." : "Ingresar"}
             </Button>
