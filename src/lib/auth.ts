@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
@@ -26,6 +27,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user) return null
         if (user.baneado) return null
+        if (!user.password) return null
 
         const passwordMatch = await bcrypt.compare(
           credentials.password as string,
@@ -44,13 +46,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
+    Google({
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role
         token.id = user.id
         token.institucionId = (user as any).institucionId
+      }
+      if (account?.provider === "google") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+        }
       }
       return token
     },
