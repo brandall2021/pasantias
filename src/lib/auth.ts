@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
+import { logAudit } from "./audit"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -51,6 +52,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (user.id) {
+        const provider = account?.provider || "credentials"
+        await logAudit(user.id, "LOGIN", `Inicio de sesión via ${provider}`)
+      }
+      return true
+    },
     async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role

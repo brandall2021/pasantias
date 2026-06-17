@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { logAudit } from "@/lib/audit"
 
 const DOCS_REQUERIDOS = ["CV", "ALUMNO_REGULAR", "ANALITICO_PARCIAL", "SALUD"]
 
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
       },
       include: { documentos: true },
     })
+
+    await logAudit(session.user.id, "POSTULAR", `Postulación a pasantía: ${pasantia.titulo}`)
 
     return NextResponse.json(postulacion, { status: 201 })
   } catch (error) {

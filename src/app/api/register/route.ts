@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
+import { logAudit } from "@/lib/audit"
 
 export async function POST(req: Request) {
   try {
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
         promedio: promedio || undefined,
       },
     })
+
+    await logAudit(user.id, "REGISTRO", `Usuario ${role} registrado: ${email}`)
 
     return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
   } catch (error) {

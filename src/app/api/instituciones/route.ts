@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -24,6 +26,9 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
   const data = await req.json()
   const { id, institucionNombre, fechaNacimiento, ...updateData } = data
 
@@ -42,6 +47,8 @@ export async function PATCH(req: Request) {
       data: { nombre: institucionNombre },
     })
   }
+
+  await logAudit(session.user.id, "MODIFICAR_PERFIL", `Actualizó su perfil`)
 
   return NextResponse.json(user)
 }

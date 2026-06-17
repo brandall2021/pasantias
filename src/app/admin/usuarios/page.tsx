@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,7 +40,11 @@ export default async function AdminUsuariosPage() {
               <tbody>
                 {usuarios.map((u) => (
                   <tr key={u.id} className="border-b last:border-0">
-                    <td className="py-3">{u.name}</td>
+                    <td className="py-3">
+                      <Link href={`/admin/usuarios/${u.id}`} className="text-blue-600 hover:underline">
+                        {u.name}
+                      </Link>
+                    </td>
                     <td className="py-3 text-gray-500">{u.email}</td>
                     <td className="py-3">
                       <Badge variant={

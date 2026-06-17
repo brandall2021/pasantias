@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, Briefcase, Building2, Flag } from "lucide-react"
+import { Users, Briefcase, Building2, Flag, Shield } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminPage() {
@@ -103,6 +103,17 @@ export default async function AdminPage() {
               <div>
                 <h3 className="font-semibold">Postulaciones</h3>
                 <p className="text-sm text-gray-500">{totalPostulaciones} totales ({postulacionesPendientes} pendientes)</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/auditoria">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <Shield size={24} className="text-gray-600" />
+              <div>
+                <h3 className="font-semibold">Auditoría</h3>
+                <p className="text-sm text-gray-500">Historial de actividad del sistema</p>
               </div>
             </CardContent>
           </Card>

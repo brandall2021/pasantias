@@ -60,6 +60,7 @@ model User {
   resenasRecibidas  Resena[]    @relation("ResenaReceptor")
   reportesHechos    Report[]    @relation("ReportesHechos")
   documentos        Documento[]
+  auditoria         AuditLog[]
 }
 
 model Institucion {
@@ -182,6 +183,21 @@ model Documento {
   usuario      User       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   postulacionId String?
   postulacion  Postulacion? @relation(fields: [postulacionId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  accion    String   // REGISTRO, LOGIN, POSTULAR, BANEAR, VERIFICAR, CREAR_PASANTIA, etc
+  detalle   String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  usuarioId String
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([accion])
+  @@index([createdAt])
 }
 
 model Report {
