@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
+import { ConvenioUpload } from "@/components/convenio-upload"
 
 export default async function MisPostulacionesPage() {
   const session = await auth()
@@ -58,6 +59,17 @@ export default async function MisPostulacionesPage() {
                         <p className="text-xs text-gray-400 mt-1">
                           Postulado el {formatDate(p.createdAt)}
                         </p>
+                        {p.estado === "ACEPTADO" && (
+                          <div className="mt-3 pt-3 border-t" onClick={(e) => e.preventDefault()}>
+                            <p className="text-xs font-medium text-gray-700 mb-2">Convenio Tripartito</p>
+                            <ConvenioUpload
+                              postulacionId={p.id}
+                              convenioUrl={(p as any).convenioEstudianteUrl}
+                              parte="estudiante"
+                              label="Tu firma"
+                            />
+                          </div>
+                        )}
                       </div>
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${estado.color}`}>
                         {estado.label}

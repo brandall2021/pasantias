@@ -111,10 +111,16 @@ model Pasantia {
 }
 
 model Postulacion {
-  id             String             @id @default(cuid())
-  mensaje        String?
-  cvUrl          String?
-  estado         PostulacionEstado  @default(PENDIENTE)
+  id                    String             @id @default(cuid())
+  mensaje               String?
+  cvUrl                 String?
+  estado                PostulacionEstado  @default(PENDIENTE)
+
+  convenioEstudianteUrl String?
+  convenioEmpresaUrl    String?
+  convenioInstitucionUrl String?
+  convenioCompletado    Boolean            @default(false)
+
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

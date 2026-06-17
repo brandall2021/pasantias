@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-
+import { ConvenioUpload } from "@/components/convenio-upload"
 
 export default async function AdminPostulacionesPage() {
   const session = await auth()
@@ -32,12 +32,13 @@ export default async function AdminPostulacionesPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+              <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
                   <th className="pb-3 font-medium">Estudiante</th>
                   <th className="pb-3 font-medium">Pasantía</th>
                   <th className="pb-3 font-medium">Estado</th>
+                  <th className="pb-3 font-medium">Convenio</th>
                   <th className="pb-3 font-medium">CV</th>
                   <th className="pb-3 font-medium">Fecha</th>
                 </tr>
@@ -51,6 +52,13 @@ export default async function AdminPostulacionesPage() {
                       <td className="py-3">{p.pasantia.titulo}</td>
                       <td className="py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${estado.color}`}>{estado.label}</span>
+                      </td>
+                      <td className="py-3 min-w-[180px]">
+                        <div className="space-y-2">
+                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEstudianteUrl} parte="estudiante" label="Estudiante" />
+                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioEmpresaUrl} parte="empresa" label="Empresa" />
+                          <ConvenioUpload postulacionId={p.id} convenioUrl={p.convenioInstitucionUrl} parte="institucion" label="Institución" />
+                        </div>
                       </td>
                       <td className="py-3">
                         {p.cvUrl ? (
