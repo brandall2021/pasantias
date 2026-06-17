@@ -33,7 +33,10 @@ export function UpdateProfileForm({ user }: { user: any }) {
         body.fechaNacimiento = formData.get("fechaNacimiento") || undefined
         body.direccion = formData.get("direccion") || undefined
         body.asisteA = formData.get("asisteA") || undefined
+        body.carrera = formData.get("carrera") || undefined
         body.legajo = formData.get("legajo") || undefined
+        body.anioCursada = formData.get("anioCursada") || undefined
+        body.promedio = formData.get("promedio") || undefined
       }
 
       const res = await fetch("/api/instituciones", {
@@ -101,13 +104,29 @@ export function UpdateProfileForm({ user }: { user: any }) {
             <Label htmlFor="direccion">Dirección de residencia</Label>
             <Input id="direccion" name="direccion" defaultValue={user.direccion || ""} placeholder="Ciudad, calle y código postal" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="asisteA">Institución a la que asiste</Label>
-            <Input id="asisteA" name="asisteA" defaultValue={user.asisteA || ""} placeholder="Universidad, escuela, etc." />
+
+          <div className="border-t pt-4 mt-2">
+            <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos e institucionales</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="legajo">Legajo</Label>
-            <Input id="legajo" name="legajo" defaultValue={user.legajo || ""} placeholder="Número de legajo o matrícula" />
+            <Label htmlFor="asisteA">Institución educativa</Label>
+            <Input id="asisteA" name="asisteA" defaultValue={user.asisteA || ""} placeholder="Universidad, escuela, facultad" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="carrera">Carrera / Especialidad</Label>
+            <Input id="carrera" name="carrera" defaultValue={user.carrera || ""} placeholder="Programa de estudios actual" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="legajo">N° de matrícula / Legajo</Label>
+            <Input id="legajo" name="legajo" defaultValue={user.legajo || ""} placeholder="Identificador único del alumno" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="anioCursada">Año de cursada / % materias aprobadas</Label>
+            <Input id="anioCursada" name="anioCursada" defaultValue={user.anioCursada || ""} placeholder="Ej: 3er año, 60%" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="promedio">Promedio general</Label>
+            <Input id="promedio" name="promedio" defaultValue={user.promedio || ""} placeholder="Ej: 8.5" />
           </div>
         </>
       )}

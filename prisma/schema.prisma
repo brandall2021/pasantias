@@ -36,7 +36,10 @@ model User {
   fechaNacimiento DateTime?
   direccion      String?
   asisteA        String?
+  carrera        String?
   legajo         String?
+  anioCursada    String?
+  promedio       String?
   image          String?
   role           UserRole   @default(ESTUDIANTE)
   verified       Boolean    @default(false)

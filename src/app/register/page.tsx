@@ -32,7 +32,10 @@ export default function RegisterPage() {
       fechaNacimiento: formData.get("fechaNacimiento") as string,
       direccion: formData.get("direccion") as string,
       asisteA: formData.get("asisteA") as string,
+      carrera: formData.get("carrera") as string,
       legajo: formData.get("legajo") as string,
+      anioCursada: formData.get("anioCursada") as string,
+      promedio: formData.get("promedio") as string,
     }
 
     try {
@@ -105,7 +108,7 @@ export default function RegisterPage() {
             {role === "ESTUDIANTE" && (
               <>
                 <div className="border-t pt-4 mt-2">
-                  <p className="text-sm font-medium text-gray-500 mb-3">Información adicional</p>
+                  <p className="text-sm font-medium text-gray-500 mb-3">Información personal</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dni">DNI / Pasaporte</Label>
@@ -119,13 +122,29 @@ export default function RegisterPage() {
                   <Label htmlFor="direccion">Dirección de residencia</Label>
                   <Input id="direccion" name="direccion" type="text" placeholder="Ciudad, calle y código postal" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="asisteA">Institución a la que asiste</Label>
-                  <Input id="asisteA" name="asisteA" type="text" placeholder="Universidad, escuela, etc." />
+
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium text-gray-500 mb-3">Datos académicos e institucionales</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="legajo">Legajo</Label>
-                  <Input id="legajo" name="legajo" type="text" placeholder="Número de legajo o matrícula" />
+                  <Label htmlFor="asisteA">Institución educativa</Label>
+                  <Input id="asisteA" name="asisteA" type="text" placeholder="Universidad, escuela, facultad" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="carrera">Carrera / Especialidad</Label>
+                  <Input id="carrera" name="carrera" type="text" placeholder="Programa de estudios actual" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="legajo">N° de matrícula / Legajo</Label>
+                  <Input id="legajo" name="legajo" type="text" placeholder="Identificador único del alumno" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="anioCursada">Año de cursada / % materias aprobadas</Label>
+                  <Input id="anioCursada" name="anioCursada" type="text" placeholder="Ej: 3er año, 60%" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="promedio">Promedio general</Label>
+                  <Input id="promedio" name="promedio" type="text" placeholder="Ej: 8.5" />
                 </div>
               </>
             )}

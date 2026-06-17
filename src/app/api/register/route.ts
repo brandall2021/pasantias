@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, institucionNombre, dni, fechaNacimiento, direccion, asisteA, legajo } = await req.json()
+    const { name, email, password, role, institucionNombre, dni, fechaNacimiento, direccion, asisteA, carrera, legajo, anioCursada, promedio } = await req.json()
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 })
@@ -44,7 +44,10 @@ export async function POST(req: Request) {
         fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : undefined,
         direccion: direccion || undefined,
         asisteA: asisteA || undefined,
+        carrera: carrera || undefined,
         legajo: legajo || undefined,
+        anioCursada: anioCursada || undefined,
+        promedio: promedio || undefined,
       },
     })
 
