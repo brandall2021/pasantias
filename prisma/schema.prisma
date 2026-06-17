@@ -51,6 +51,7 @@ model User {
   resenasHechas     Resena[]    @relation("ResenaEmisor")
   resenasRecibidas  Resena[]    @relation("ResenaReceptor")
   reportesHechos    Report[]    @relation("ReportesHechos")
+  documentos        Documento[]
 }
 
 model Institucion {
@@ -157,6 +158,18 @@ model Resena {
   emisor     User     @relation("ResenaEmisor", fields: [emisorId], references: [id], onDelete: Cascade)
   receptorId String
   receptor   User     @relation("ResenaReceptor", fields: [receptorId], references: [id], onDelete: Cascade)
+}
+
+model Documento {
+  id        String   @id @default(cuid())
+  nombre    String
+  tipo      String   // ANALITICO, TITULO, CERTIFICADO, OTRO
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarioId String
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 }
 
 model Report {

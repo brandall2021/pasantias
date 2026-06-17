@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { User, Mail, Building2 } from "lucide-react"
+import { User, Mail, Building2, FileText } from "lucide-react"
 import Link from "next/link"
 import { UpdateProfileForm } from "./update-profile-form"
 
@@ -49,17 +49,30 @@ export default async function PerfilPage() {
           </Link>
         )}
         {user.role === "ESTUDIANTE" && (
-          <Link href="/perfil/postulaciones">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="pt-6 flex items-center gap-3">
-                <User size={24} className="text-blue-600" />
-                <div>
-                  <h3 className="font-semibold">Mis Postulaciones</h3>
-                  <p className="text-sm text-gray-500">Ver estado de mis postulaciones</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          <>
+            <Link href="/perfil/postulaciones">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="pt-6 flex items-center gap-3">
+                  <User size={24} className="text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold">Mis Postulaciones</h3>
+                    <p className="text-sm text-gray-500">Ver estado de mis postulaciones</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/perfil/documentos">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="pt-6 flex items-center gap-3">
+                  <FileText size={24} className="text-purple-600" />
+                  <div>
+                    <h3 className="font-semibold">Mis Documentos</h3>
+                    <p className="text-sm text-gray-500">Analítico, título, certificados</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </>
         )}
       </div>
     </div>
