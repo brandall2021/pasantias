@@ -33,6 +33,17 @@ const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
 )
 CardContent.displayName = "CardContent"
 
+const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h3
+      ref={ref}
+      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      {...props}
+    />
+  )
+)
+CardTitle.displayName = "CardTitle"
+
 const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
@@ -44,4 +55,4 @@ const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
 )
 CardFooter.displayName = "CardFooter"
 
-export { Card, CardHeader, CardContent, CardFooter }
+export { Card, CardHeader, CardContent, CardFooter, CardTitle }

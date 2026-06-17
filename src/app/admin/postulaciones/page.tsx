@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { Link } from "lucide-react"
+
 
 export default async function AdminPostulacionesPage() {
   const session = await auth()
