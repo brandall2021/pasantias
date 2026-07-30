@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
+import { crearNotificacion } from "@/lib/notificacion"
 
 export class ConvenioService {
   static async obtenerPorPostulacion(postulacionId: string) {
@@ -31,7 +32,7 @@ export class ConvenioService {
       })
     }
 
-    const updateData: any = {}
+    const updateData: Record<string, boolean> = {}
     const parteMap: Record<string, string> = {
       alumno: "firmaAlumno",
       empresa: "firmaEmpresa",
@@ -55,6 +56,70 @@ export class ConvenioService {
     await logAudit(usuarioId, "FIRMAR_CONVENIO",
       `${parte} firmó convenio para: ${postulacion.pasantia.titulo}`,
       "Convenio", convenio.id)
+
+    // Notificar a los demás participantes
+    const tituloP = postulacion.pasantia.titulo
+    await crearNotificacion({
+      usuarioId: postulacion.alumno.id,
+      titulo: "Firma de convenio",
+      mensaje: `La ${parte === "alumno" ? "empresa" : parte} firmó el convenio para "${tituloP}"`,
+      link: "/universidad",
+    })
+
+    const empresaUsers = await prisma.user.findMany({
+      where: { empresaId: postulacion.pasantia.empresaId, deletedAt: null },
+      select: { id: true },
+    })
+    for (const u of empresaUsers) {
+      if (u.id !== usuarioId) {
+        await crearNotificacion({
+          usuarioId: u.id,
+          titulo: "Firma de convenio",
+          mensaje: `La ${parte} firmó el convenio para "${tituloP}"`,
+          link: "/perfil/pasantias",
+        })
+      }
+    }
+
+    const universidadPostulacion = await prisma.postulacion.findUnique({
+      where: { id: postulacionId },
+      select: {
+        pasantia: {
+          select: {
+            unidadAcademica: {
+              select: { universidad: { select: { id: true } } },
+            },
+          },
+        },
+      },
+    })
+    const univId = universidadPostulacion?.pasantia.unidadAcademica?.universidad?.id
+    if (univId) {
+      const univUsers = await prisma.user.findMany({
+        where: { universidadId: univId, deletedAt: null },
+        select: { id: true },
+      })
+      for (const u of univUsers) {
+        if (u.id !== usuarioId) {
+          await crearNotificacion({
+            usuarioId: u.id,
+            titulo: "Firma de convenio",
+            mensaje: `La ${parte} firmó el convenio para "${tituloP}"`,
+            link: "/universidad",
+          })
+        }
+      }
+    }
+
+    // All signed -> notify everyone
+    if (convenio.firmaAlumno && convenio.firmaEmpresa && convenio.firmaUniversidad) {
+      await crearNotificacion({
+        usuarioId: postulacion.alumno.id,
+        titulo: "Convenio completado",
+        mensaje: `El convenio para "${tituloP}" fue firmado por todas las partes`,
+        link: "/perfil/postulaciones",
+      })
+    }
 
     return convenio
   }
@@ -83,7 +148,7 @@ export class ConvenioService {
 
   static async evaluar(
     postulacionId: string,
-    tipo: string,
+    tipo: "EMPRESA_A_ALUMNO" | "ALUMNO_A_EMPRESA" | "TUTOR",
     puntaje: number,
     comentario: string | undefined,
     autorId: string,
@@ -96,7 +161,7 @@ export class ConvenioService {
     const evaluacion = await prisma.evaluacion.create({
       data: {
         convenioId: convenio.id,
-        tipo: tipo as any,
+        tipo,
         puntaje,
         comentario,
         autorId,

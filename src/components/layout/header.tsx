@@ -2,13 +2,33 @@
 
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
-import { Building2, Search, MessageSquare, User, Menu, X, LogOut, Shield } from "lucide-react"
+import { Building2, Search, MessageSquare, User, Menu, X, LogOut, Shield, Star, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export function Header() {
   const { data: session } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [noLeidas, setNoLeidas] = useState(0)
+
+  useEffect(() => {
+    if (!session?.user) return
+    fetch("/api/notificaciones")
+      .then((r) => r.json())
+      .then((data) => setNoLeidas(data.noLeidas || 0))
+      .catch(() => {})
+  }, [session])
+
+  useEffect(() => {
+    if (!session?.user) return
+    const interval = setInterval(() => {
+      fetch("/api/notificaciones")
+        .then((r) => r.json())
+        .then((data) => setNoLeidas(data.noLeidas || 0))
+        .catch(() => {})
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [session])
 
   return (
     <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
@@ -37,10 +57,34 @@ export function Header() {
                     Mis Postulaciones
                   </Link>
                 )}
+                <Link href="/notificaciones" className="relative flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                  <Bell size={16} />
+                  {noLeidas > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 font-bold">
+                      {noLeidas > 99 ? "99+" : noLeidas}
+                    </span>
+                  )}
+                </Link>
+                <Link href="/perfil/evaluaciones" className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                  <Star size={16} />
+                  Evaluaciones
+                </Link>
                 <Link href="/chat" className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
                   <MessageSquare size={16} />
                   Chat
                 </Link>
+                {session.user.role === "UNIVERSIDAD" && (
+                  <Link href="/universidad" className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 transition-colors">
+                    <Building2 size={16} />
+                    Universidad
+                  </Link>
+                )}
+                {session.user.role === "TUTOR_ACADEMICO" && (
+                  <Link href="/tutor-academico" className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 transition-colors">
+                    <Building2 size={16} />
+                    Tutor Académico
+                  </Link>
+                )}
                 {session.user.role === "ADMIN" && (
                   <Link href="/admin" className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 transition-colors">
                     <Shield size={16} />
@@ -93,9 +137,25 @@ export function Header() {
                     Mis Postulaciones
                   </Link>
                 )}
+                <Link href="/notificaciones" className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
+                  Notificaciones {noLeidas > 0 && `(${noLeidas})`}
+                </Link>
+                <Link href="/perfil/evaluaciones" className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
+                  Evaluaciones
+                </Link>
                 <Link href="/chat" className="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
                   Chat
                 </Link>
+                {session.user.role === "UNIVERSIDAD" && (
+                  <Link href="/universidad" className="block px-3 py-2 text-sm text-green-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
+                    Universidad
+                  </Link>
+                )}
+                {session.user.role === "TUTOR_ACADEMICO" && (
+                  <Link href="/tutor-academico" className="block px-3 py-2 text-sm text-purple-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
+                    Tutor Académico
+                  </Link>
+                )}
                 {session.user.role === "ADMIN" && (
                   <Link href="/admin" className="block px-3 py-2 text-sm text-orange-600 hover:bg-gray-50 rounded" onClick={() => setMenuOpen(false)}>
                     Admin

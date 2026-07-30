@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils"
 import { BanUserButton } from "../ban-button"
 import Link from "next/link"
 import { ArrowLeft, Shield, Mail, Phone, Calendar, FileText, Building2 } from "lucide-react"
+import { ToggleRoleButton } from "../toggle-role-button"
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -45,10 +46,14 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 {user.name}
                 <Badge variant={
                   user.role === "ADMIN" ? "destructive" :
-                  user.role === "EMPRESA" ? "default" : "secondary"
+                  user.role === "EMPRESA" || user.role === "UNIVERSIDAD" ? "default" : "secondary"
                 }>
                   {user.role === "ESTUDIANTE" ? "Estudiante" :
-                   user.role === "EMPRESA" ? "Empresa" : "Admin"}
+                   user.role === "EMPRESA" ? "Empresa" :
+                   user.role === "UNIVERSIDAD" ? "Universidad" :
+                   user.role === "TUTOR_EMPRESA" ? "Tutor Empresa" :
+                   user.role === "TUTOR_ACADEMICO" ? "Tutor Académico" :
+                   "Admin"}
                 </Badge>
                 {user.baneado && <Badge variant="destructive">Baneado</Badge>}
               </CardTitle>
@@ -112,6 +117,24 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               {user.motivoBaneo && (
                 <p className="text-xs text-red-600">Motivo: {user.motivoBaneo}</p>
               )}
+
+              <hr className="my-2" />
+
+              <p className="text-xs font-medium text-gray-500">Cambiar Rol</p>
+              <ToggleRoleButton
+                userId={user.id}
+                currentRole={user.role}
+                userName={user.name}
+                targetRole="TUTOR_ACADEMICO"
+                label="Hacer Tutor Académico"
+              />
+              <ToggleRoleButton
+                userId={user.id}
+                currentRole={user.role}
+                userName={user.name}
+                targetRole="TUTOR_EMPRESA"
+                label="Hacer Tutor Empresa"
+              />
             </CardContent>
           </Card>
         </div>

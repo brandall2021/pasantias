@@ -2,21 +2,24 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, Briefcase, Building2, Shield } from "lucide-react"
+import { Users, Briefcase, Building2, Shield, Building } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminPage() {
   const session = await auth()
   if (!session?.user || session.user.role !== "ADMIN") redirect("/login")
 
-  const stats = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "EMPRESA" } }),
-    prisma.user.count({ where: { role: "ESTUDIANTE" } }),
-    prisma.pasantia.count({ where: { activo: true } }),
-    prisma.pasantia.count(),
-    prisma.postulacion.count(),
-    prisma.postulacion.count({ where: { estado: "PENDIENTE" } }),
+  const [stats, empresasPendientes] = await Promise.all([
+    Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: "EMPRESA" } }),
+      prisma.user.count({ where: { role: "ESTUDIANTE" } }),
+      prisma.pasantia.count({ where: { activo: true } }),
+      prisma.pasantia.count(),
+      prisma.postulacion.count(),
+      prisma.postulacion.count({ where: { estado: "PENDIENTE" } }),
+    ]),
+    prisma.empresa.count({ where: { estado: "PENDIENTE" } }),
   ])
 
   const [totalUsuarios, totalEmpresas, totalEstudiantes, pasantiasActivas, totalPasantias, totalPostulaciones, postulacionesPendientes] = stats
@@ -91,6 +94,17 @@ export default async function AdminPage() {
               <div>
                 <h3 className="font-semibold">Pasantías</h3>
                 <p className="text-sm text-gray-500">{totalPasantias} creadas ({pasantiasActivas} activas)</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/empresas">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <CardContent className="pt-6 flex items-center gap-3">
+              <Building size={24} className="text-purple-600" />
+              <div>
+                <h3 className="font-semibold">Empresas</h3>
+                <p className="text-sm text-gray-500">{empresasPendientes} pendientes de validación</p>
               </div>
             </CardContent>
           </Card>

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       password: hashedPassword,
       role: role || "ESTUDIANTE",
       dni: extra.dni || undefined,
-      fechaNacimiento: extra.fechaNacimiento ? new Date(extra.fechaNacimiento) : undefined,
+      fechaNacimiento: extra.fechaNacimiento ? (() => { const d = new Date(extra.fechaNacimiento); if (isNaN(d.getTime())) return undefined; return d; })() : undefined,
       direccion: extra.direccion || undefined,
       legajo: extra.legajo || undefined,
       anioCursada: extra.anioCursada || undefined,

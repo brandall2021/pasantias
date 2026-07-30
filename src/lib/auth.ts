@@ -26,6 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user) return null
         if (user.baneado) return null
+        if (user.deletedAt) return null
         if (!user.password) return null
 
         const passwordMatch = await bcrypt.compare(credentials.password as string, user.password)

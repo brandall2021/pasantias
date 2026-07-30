@@ -3,7 +3,11 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
-const RESET_SECRET = process.env.AUTH_SECRET || "fallback-secret"
+function getResetSecret(): string {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) throw new Error("AUTH_SECRET no configurado")
+  return secret
+}
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
 
     let decoded: { email: string }
     try {
-      decoded = jwt.verify(token, RESET_SECRET) as { email: string }
+      decoded = jwt.verify(token, getResetSecret()) as { email: string }
     } catch {
       return NextResponse.json({ error: "El enlace ha expirado o es inválido" }, { status: 400 })
     }

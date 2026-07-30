@@ -75,6 +75,38 @@ export function pasantiaNotificationEmail({
   }
 }
 
+export function postulacionEstadoEmail({
+  nombre,
+  pasantiaTitulo,
+  empresaNombre,
+  nuevoEstado,
+}: {
+  nombre: string
+  pasantiaTitulo: string
+  empresaNombre: string
+  nuevoEstado: string
+}) {
+  const estadoLabels: Record<string, string> = {
+    REVISADO: "revisada",
+    ACEPTADO: "aceptada",
+    RECHAZADO: "rechazada",
+  }
+  const label = estadoLabels[nuevoEstado] || nuevoEstado
+  return {
+    subject: `Postulación ${label}: ${pasantiaTitulo}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a56db;">Estado de tu postulación</h2>
+        <p>Hola <strong>${nombre}</strong>,</p>
+        <p>Tu postulación a la pasantía <strong>${pasantiaTitulo}</strong> en <strong>${empresaNombre}</strong> ha sido <strong>${label}</strong>.</p>
+        <p>Ingresá a la plataforma para ver los detalles.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #9ca3af;">Sistema de Pasantías</p>
+      </div>
+    `,
+  }
+}
+
 export function resetPasswordEmail({ name, url }: { name: string; url: string }) {
   return {
     subject: "Recuperación de contraseña - Sistema de Pasantías",

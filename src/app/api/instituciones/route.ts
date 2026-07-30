@@ -44,7 +44,11 @@ export async function PATCH(req: Request) {
   const { id, fechaNacimiento, ...updateData } = data
 
   if (fechaNacimiento) {
-    (updateData as any).fechaNacimiento = new Date(fechaNacimiento)
+    const d = new Date(fechaNacimiento)
+    if (isNaN(d.getTime())) {
+      return NextResponse.json({ error: "Fecha de nacimiento inválida" }, { status: 400 })
+    }
+    (updateData as any).fechaNacimiento = d
   }
 
   await prisma.user.update({

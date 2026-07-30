@@ -2,6 +2,21 @@ import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
 import { sendEmail, pasantiaNotificationEmail } from "@/lib/email"
 
+const ESTADO_TRANSITIONS: Record<string, string[]> = {
+  BORRADOR: ["PUBLICADA", "CANCELADA"],
+  PUBLICADA: ["SELECCION", "CANCELADA"],
+  SELECCION: ["ESPERA_CONVENIO", "CANCELADA"],
+  ESPERA_CONVENIO: ["ACTIVA", "CANCELADA"],
+  ACTIVA: ["FINALIZADA", "CANCELADA"],
+  FINALIZADA: [],
+  CANCELADA: ["BORRADOR"],
+}
+
+const WHO_CAN_TRANSITION: Record<string, string[]> = {
+  PUBLICAR: ["EMPRESA", "ADMIN"],
+  CAMBIAR_ESTADO: ["ADMIN"],
+}
+
 export class PasantiaService {
   static async crear(data: {
     titulo: string
@@ -61,7 +76,23 @@ export class PasantiaService {
     return pasantia
   }
 
-  static async cambiarEstado(pasantiaId: string, nuevoEstado: string, usuarioId: string) {
+  static async cambiarEstado(pasantiaId: string, nuevoEstado: string, usuarioId: string, opts?: { role?: string }) {
+    const pasantiaActual = await prisma.pasantia.findUnique({
+      where: { id: pasantiaId },
+      select: { estado: true, titulo: true },
+    })
+    if (!pasantiaActual) throw new Error("Pasantía no encontrada")
+
+    const actual = pasantiaActual.estado
+    const permitidos = ESTADO_TRANSITIONS[actual] || []
+    if (!permitidos.includes(nuevoEstado)) {
+      throw new Error(`No se puede cambiar de ${actual} a ${nuevoEstado}`)
+    }
+
+    if (nuevoEstado === "PUBLICADA" && opts?.role && !WHO_CAN_TRANSITION.PUBLICAR.includes(opts.role)) {
+      throw new Error("Solo la empresa o admin pueden publicar pasantías")
+    }
+
     if (nuevoEstado === "ACTIVA") {
       const postulacionesAceptadas = await prisma.postulacion.findMany({
         where: { pasantiaId, estado: "ACEPTADO" },
@@ -85,7 +116,7 @@ export class PasantiaService {
     })
 
     await logAudit(usuarioId, "CAMBIAR_ESTADO_PASANTIA",
-      `Cambió estado de "${pasantia.titulo}" a ${nuevoEstado}`,
+      `Cambió estado de "${pasantiaActual.titulo}" a ${nuevoEstado}`,
       "Pasantia", pasantiaId)
 
     return pasantia

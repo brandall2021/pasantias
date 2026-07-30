@@ -12,13 +12,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const data = await req.json()
 
+  const target = await prisma.user.findUnique({ where: { id } })
+  if (!target) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+
   if ("baneado" in data) {
-    const target = await prisma.user.findUnique({ where: { id } })
-    if (target) {
-      await logAudit(session.user.id, "BANEAR",
-        `${data.baneado ? "Baneó" : "Desbaneó"} a ${target.name} (${target.email})`,
-        "User", id)
-    }
+    await logAudit(session.user.id, "BANEAR",
+      `${data.baneado ? "Baneó" : "Desbaneó"} a ${target.name} (${target.email})`,
+      "User", id)
+  }
+  if ("role" in data && data.role !== target.role) {
+    await logAudit(session.user.id, "CAMBIAR_ROL",
+      `Cambió rol de ${target.name}: ${target.role} → ${data.role}`,
+      "User", id)
   }
 
   const user = await prisma.user.update({ where: { id }, data })
@@ -36,8 +41,9 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   if (target) {
     await logAudit(session.user.id, "ELIMINAR_USUARIO",
       `Eliminó a ${target.name} (${target.email})`, "User", id)
+    await prisma.user.update({ where: { id }, data: { deletedAt: new Date(), baneado: true } })
+    return NextResponse.json({ success: true })
   }
 
-  await prisma.user.delete({ where: { id } })
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
 }

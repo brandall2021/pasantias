@@ -1,0 +1,120 @@
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { formatDate } from "@/lib/utils"
+import { FileText, User, BookOpen, Clock } from "lucide-react"
+import { SeguimientoForm } from "./seguimiento-form"
+
+export default async function TutorAcademicoDashboard() {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "TUTOR_ACADEMICO") redirect("/login")
+
+  const postulaciones = await prisma.postulacion.findMany({
+    where: {
+      estado: "ACEPTADO",
+      pasantia: { estado: { in: ["ACTIVA", "ESPERA_CONVENIO"] } },
+    },
+    include: {
+      alumno: { select: { name: true, email: true, carrera: { select: { nombre: true, facultad: { select: { nombre: true, universidad: { select: { nombre: true } } } } } } } },
+      pasantia: { select: { titulo: true, area: true, estado: true, empresa: { select: { nombre: true } } } },
+      convenio: { include: { seguimientos: { orderBy: { fecha: "desc" }, take: 5 } } },
+    },
+    orderBy: { fecha: "desc" },
+  })
+
+  const conveniosPendientes = postulaciones.filter((p) => !p.convenio?.firmaUniversidad)
+  const activas = postulaciones.filter((p) => p.convenio?.firmaUniversidad && p.pasantia.estado === "ACTIVA")
+  const finalizadas = await prisma.postulacion.findMany({
+    where: { pasantia: { estado: "FINALIZADA" } },
+    include: {
+      alumno: { select: { name: true } },
+      pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
+    },
+    take: 20,
+    orderBy: { fecha: "desc" },
+  })
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <User size={28} className="text-purple-600" />
+        <h1 className="text-2xl font-bold">Panel del Tutor Académico</h1>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-yellow-600">{conveniosPendientes.length}</p><p className="text-sm text-gray-500">Convenios pendientes</p></CardContent></Card>
+        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-green-600">{activas.length}</p><p className="text-sm text-gray-500">Pasantías activas</p></CardContent></Card>
+        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-gray-600">{finalizadas.length}</p><p className="text-sm text-gray-500">Finalizadas</p></CardContent></Card>
+      </div>
+
+      {conveniosPendientes.length > 0 && (
+        <Card className="mb-6 border-yellow-200">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock size={16} /> Convenios por firmar</CardTitle></CardHeader>
+          <CardContent>
+            {conveniosPendientes.map((p) => (
+              <div key={p.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                <div>
+                  <p className="font-medium text-sm">{p.alumno.name}</p>
+                  <p className="text-xs text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>
+                </div>
+                {p.alumno.carrera && (
+                  <span className="text-xs text-gray-400">{p.alumno.carrera.facultad.universidad.nombre}</span>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {postulaciones.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-center py-12 text-gray-500">
+            <p>No tenés pasantías activas asignadas.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {postulaciones.map((p) => (
+            <Card key={p.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <span>{p.alumno.name}</span>
+                      <Badge variant="secondary">{p.pasantia.area}</Badge>
+                    </CardTitle>
+                    <p className="text-sm text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>
+                  </div>
+                  <Badge>{p.pasantia.estado}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1"><FileText size={12} /> Seguimiento</h4>
+                    {p.convenio?.seguimientos && p.convenio.seguimientos.length > 0 ? (
+                      <div className="space-y-1">
+                        {p.convenio.seguimientos.map((s) => (
+                          <div key={s.id} className="text-xs bg-gray-50 p-2 rounded">
+                            <span className="text-gray-400">{formatDate(s.fecha)}:</span> {s.descripcion}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400">Sin seguimientos registrados</p>
+                    )}
+                    {p.convenio && (
+                      <SeguimientoForm postulacionId={p.id} />
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

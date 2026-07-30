@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Trash2, ExternalLink, Plus } from "lucide-react"
+import { FileText, Trash2, ExternalLink, Plus, Upload } from "lucide-react"
 
 interface Documento {
   id: string
@@ -39,6 +39,7 @@ export default function DocumentosPage() {
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [uploadMode, setUploadMode] = useState<"link" | "file">("link")
   const router = useRouter()
 
   useEffect(() => {
@@ -84,6 +85,36 @@ export default function DocumentosPage() {
     }
   }
 
+  async function handleFileUpload(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setSaving(true)
+    setError("")
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const res = await fetch("/api/documentos/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        setError(err.error || "Error al subir")
+        setSaving(false)
+        return
+      }
+
+      const nuevo = await res.json()
+      setDocumentos((prev) => [nuevo, ...prev])
+      setShowForm(false)
+      setSaving(false)
+    } catch {
+      setError("Error de conexión")
+      setSaving(false)
+    }
+  }
+
   async function eliminar(id: string) {
     if (!confirm("¿Eliminar este documento?")) return
     const res = await fetch(`/api/documentos/${id}`, { method: "DELETE" })
@@ -105,33 +136,67 @@ export default function DocumentosPage() {
       {showForm && (
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>}
-
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre del documento</Label>
-                <Input id="nombre" name="nombre" required placeholder="Ej: Analítico 2024" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tipo">Tipo</Label>
-                <Select id="tipo" name="tipo" required>
-                  <option value="">Seleccionar...</option>
-                  {TIPOS.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="url">Link de Google Drive</Label>
-                <Input id="url" name="url" required placeholder="https://drive.google.com/file/d/..." />
-              </div>
-
-              <Button type="submit" disabled={saving}>
-                {saving ? "Guardando..." : "Guardar Documento"}
+            <div className="flex gap-2 mb-4">
+              <Button type="button" size="sm" variant={uploadMode === "link" ? "primary" : "secondary"} onClick={() => setUploadMode("link")}>
+                <ExternalLink size={14} /> Link
               </Button>
-            </form>
+              <Button type="button" size="sm" variant={uploadMode === "file" ? "primary" : "secondary"} onClick={() => setUploadMode("file")}>
+                <Upload size={14} /> Subir archivo
+              </Button>
+            </div>
+
+            {uploadMode === "link" ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>}
+
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre del documento</Label>
+                  <Input id="nombre" name="nombre" required placeholder="Ej: Analítico 2024" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo</Label>
+                  <Select id="tipo" name="tipo" required>
+                    <option value="">Seleccionar...</option>
+                    {TIPOS.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="url">Link de Google Drive</Label>
+                  <Input id="url" name="url" required placeholder="https://drive.google.com/file/d/..." />
+                </div>
+
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Guardando..." : "Guardar Documento"}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleFileUpload} className="space-y-4">
+                {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>}
+
+                <div className="space-y-2">
+                  <Label htmlFor="tipo_file">Tipo</Label>
+                  <Select id="tipo_file" name="tipo" required>
+                    <option value="">Seleccionar...</option>
+                    {TIPOS.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="file">Archivo (PDF, imagen, DOC)</Label>
+                  <Input id="file" name="file" type="file" required accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" />
+                </div>
+
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Subiendo..." : "Subir archivo"}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
       )}

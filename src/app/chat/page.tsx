@@ -14,15 +14,15 @@ interface Chat {
   id: string
   creador: { id: string; name: string; image: string | null }
   participante: { id: string; name: string; image: string | null }
-  mensajes: { contenido: string; createdAt: Date }[]
+  mensajes: { texto: string; fecha: Date }[]
 }
 
 interface Mensaje {
   id: string
-  contenido: string
-  createdAt: string
-  emisorId: string
-  emisor: { id: string; name: string; image: string | null }
+  texto: string
+  fecha: string
+  autorId: string
+  autor: { id: string; name: string; image: string | null }
 }
 
 export default function ChatPage() {
@@ -112,7 +112,7 @@ export default function ChatPage() {
                       <span className="font-medium">{other.name}</span>
                       {chat.mensajes[0] && (
                         <p className="text-gray-500 truncate text-xs mt-1">
-                          {chat.mensajes[0].contenido}
+                          {chat.mensajes[0].texto}
                         </p>
                       )}
                     </button>
@@ -136,20 +136,20 @@ export default function ChatPage() {
                   {mensajes.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.emisorId === session?.user.id ? "justify-end" : "justify-start"}`}
+                      className={`flex ${msg.autorId === session?.user.id ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                          msg.emisorId === session?.user.id
+                          msg.autorId === session?.user.id
                             ? "bg-blue-600 text-white"
                             : "bg-gray-100 text-gray-900"
                         }`}
                       >
-                        <p className="text-sm">{msg.contenido}</p>
+                        <p className="text-sm">{msg.texto}</p>
                         <p className={`text-xs mt-1 ${
-                          msg.emisorId === session?.user.id ? "text-blue-200" : "text-gray-400"
+                          msg.autorId === session?.user.id ? "text-blue-200" : "text-gray-400"
                         }`}>
-                          {formatDate(msg.createdAt)}
+                          {formatDate(msg.fecha)}
                         </p>
                       </div>
                     </div>

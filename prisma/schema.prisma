@@ -138,6 +138,7 @@ model User {
   legajo         String?
   anioCursada    String?
   promedio       String?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -148,12 +149,17 @@ model User {
   carreraId     String?
   carrera       Carrera?      @relation(fields: [carreraId], references: [id])
 
-  postulaciones Postulacion[]
-  documentos    Documento[]
-  auditoria     AuditLog[]
-  mensajes      Mensaje[]
-  evaluaciones  Evaluacion[]
-  seguimientos  Seguimiento[]
+  @@index([deletedAt])
+
+  postulaciones             Postulacion[] @relation("AlumnoPostulaciones")
+  postulacionesTutoriaAca   Postulacion[] @relation("TutorAcademicoAssign")
+  postulacionesTutoriaEmp   Postulacion[] @relation("TutorEmpresaAssign")
+  documentos                Documento[]
+  auditoria                 AuditLog[]
+  mensajes                  Mensaje[]
+  evaluaciones              Evaluacion[]
+  seguimientos              Seguimiento[]
+  notificaciones            Notificacion[]
 }
 
 // ─── Pasantía ─────────────────────────────────────────
@@ -192,10 +198,16 @@ model Postulacion {
   mensaje String?
 
   alumnoId   String
-  alumno     User     @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  alumno     User     @relation("AlumnoPostulaciones", fields: [alumnoId], references: [id], onDelete: Cascade)
 
   pasantiaId String
   pasantia   Pasantia @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
+
+  tutorAcademicoId String?
+  tutorAcademico   User?    @relation("TutorAcademicoAssign", fields: [tutorAcademicoId], references: [id])
+
+  tutorEmpresaId String?
+  tutorEmpresa   User?    @relation("TutorEmpresaAssign", fields: [tutorEmpresaId], references: [id])
 
   convenio      Convenio?
   conversacion  Conversacion?
@@ -291,6 +303,22 @@ model Evaluacion {
 
   autorId String
   autor   User     @relation(fields: [autorId], references: [id])
+}
+
+// ─── Notificaciones ────────────────────────────────────
+
+model Notificacion {
+  id        String   @id @default(cuid())
+  titulo    String
+  mensaje   String?
+  link      String?
+  leida     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  usuarioId String
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, leida])
 }
 
 // ─── Auditoría ────────────────────────────────────────

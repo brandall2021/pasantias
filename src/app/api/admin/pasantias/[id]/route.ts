@@ -15,7 +15,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (data.estado) {
     try {
-      const pasantia = await PasantiaService.cambiarEstado(id, data.estado, session.user.id)
+      const pasantia = await PasantiaService.cambiarEstado(id, data.estado, session.user.id, { role: "ADMIN" })
       return NextResponse.json(pasantia)
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 400 })

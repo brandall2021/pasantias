@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
+import { PasantiaService } from "@/services/pasantia.service"
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -38,6 +39,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const data = await req.json()
+
+  if (data.estado) {
+    try {
+      const pasantia = await PasantiaService.cambiarEstado(id, data.estado, session.user.id, {
+        role: session.user.role,
+      })
+      return NextResponse.json(pasantia)
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+  }
+
   const pasantia = await prisma.pasantia.update({ where: { id }, data })
   await logAudit(session.user.id, "EDITAR_PASANTIA", `Editó pasantía: ${pasantia.titulo}`, "Pasantia", id)
   return NextResponse.json(pasantia)

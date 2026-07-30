@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { AREAS } from "@/lib/constants"
+import { AREAS, ESTADOS_PASANTIA } from "@/lib/constants"
+import { CheckCircle, Send, XCircle, ChevronRight, ArrowLeftCircle } from "lucide-react"
 
 interface Pasantia {
   id: string
@@ -25,12 +26,22 @@ interface Pasantia {
   activo: boolean
 }
 
+const NEXT_STATES: Record<string, { label: string; icon: any; variant?: string; estado: string }[]> = {
+  BORRADOR: [{ label: "Publicar pasantía", icon: Send, estado: "PUBLICADA" }],
+  PUBLICADA: [{ label: "Iniciar selección", icon: ChevronRight, estado: "SELECCION" }],
+  SELECCION: [{ label: "Esperar convenio", icon: ChevronRight, estado: "ESPERA_CONVENIO" }],
+  ESPERA_CONVENIO: [{ label: "Activar pasantía", icon: CheckCircle, estado: "ACTIVA" }],
+  ACTIVA: [{ label: "Finalizar", icon: CheckCircle, estado: "FINALIZADA" }],
+  CANCELADA: [{ label: "Reabrir borrador", icon: ArrowLeftCircle, estado: "BORRADOR" }],
+}
+
 export default function EditarPasantiaPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [pasantia, setPasantia] = useState<Pasantia | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
@@ -82,6 +93,23 @@ export default function EditarPasantiaPage() {
     }
   }
 
+  async function cambiarEstado(nuevoEstado: string) {
+    setTransitioning(true)
+    setError("")
+    const res = await fetch(`/api/pasantias/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado: nuevoEstado }),
+    })
+    if (res.ok) {
+      router.refresh()
+    } else {
+      const err = await res.json()
+      setError(err.error || "Error al cambiar estado")
+    }
+    setTransitioning(false)
+  }
+
   if (loading) return <div className="max-w-2xl mx-auto px-4 py-8 text-gray-500">Cargando...</div>
 
   if (error && !pasantia) return (
@@ -95,13 +123,55 @@ export default function EditarPasantiaPage() {
     </div>
   )
 
+  const estadoInfo = ESTADOS_PASANTIA[pasantia!.estado] || { label: pasantia!.estado, color: "" }
+  const acciones = NEXT_STATES[pasantia!.estado] || []
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Editar Pasantía</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Editar Pasantía</h1>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${estadoInfo.color}`}>{estadoInfo.label}</span>
+      </div>
+
+      {acciones.length > 0 && (
+        <Card className="mb-4 border-blue-200 bg-blue-50">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              {acciones.map((accion) => {
+                const Icon = accion.icon
+                return (
+                  <Button
+                    key={accion.estado}
+                    type="button"
+                    size="sm"
+                    onClick={() => cambiarEstado(accion.estado)}
+                    disabled={transitioning}
+                  >
+                    {transitioning ? "..." : <><Icon size={16} /> {accion.label}</>}
+                  </Button>
+                )
+              })}
+              {pasantia!.estado !== "CANCELADA" && pasantia!.estado !== "FINALIZADA" && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => cambiarEstado("CANCELADA")}
+                  disabled={transitioning}
+                >
+                  {transitioning ? "..." : <><XCircle size={16} /> Cancelar</>}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">{error}</p>}
+
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</p>}
             {success && <p className="text-sm text-green-600 bg-green-50 p-3 rounded">Guardado correctamente. Redirigiendo...</p>}
 
             <div className="space-y-2">

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
+import { sendEmail, postulacionEstadoEmail } from "@/lib/email"
+import { crearNotificacion } from "@/lib/notificacion"
+import type { Prisma } from "@prisma/client"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -10,7 +13,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { pasantiaId, mensaje } = await req.json()
+    const { pasantiaId, mensaje, documentos } = await req.json()
 
     const pasantia = await prisma.pasantia.findUnique({ where: { id: pasantiaId } })
     if (!pasantia) return NextResponse.json({ error: "Pasantía no encontrada" }, { status: 404 })
@@ -33,10 +36,36 @@ export async function POST(req: Request) {
       },
     })
 
+    // Guardar documentos adjuntos
+    if (documentos?.length > 0) {
+      await prisma.documento.createMany({
+        data: documentos.map((d: { tipo: string; url: string }) => ({
+          tipo: d.tipo,
+          url: d.url,
+          usuarioId: session.user.id,
+          postulacionId: postulacion.id,
+        })),
+      })
+    }
+
     // Create conversacion automáticamente
     await prisma.conversacion.create({
       data: { postulacionId: postulacion.id },
     })
+
+    // Notificar a la empresa
+    const empresaUsuarios = await prisma.user.findMany({
+      where: { empresaId: pasantia.empresaId, deletedAt: null },
+      select: { id: true },
+    })
+    for (const u of empresaUsuarios) {
+      await crearNotificacion({
+        usuarioId: u.id,
+        titulo: "Nueva postulación",
+        mensaje: `${session.user.name} se postuló a "${pasantia.titulo}"`,
+        link: `/perfil/pasantias/${pasantia.id}`,
+      })
+    }
 
     await logAudit(session.user.id, "POSTULAR", `Se postuló a: ${pasantia.titulo}`, "Postulacion", postulacion.id)
     return NextResponse.json(postulacion)
@@ -49,7 +78,7 @@ export async function PATCH(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
-  const { id, estado } = await req.json()
+  const { id, estado, tutorAcademicoId, tutorEmpresaId } = await req.json()
 
   const postulacion = await prisma.postulacion.findUnique({
     where: { id },
@@ -60,21 +89,63 @@ export async function PATCH(req: Request) {
   })
   if (!postulacion) return NextResponse.json({ error: "No encontrada" }, { status: 404 })
 
-  const userEmpresaId = (session.user as any).empresaId
+  const userEmpresaId = (session.user as { empresaId?: string }).empresaId
   const esEmpresa = postulacion.pasantia.empresaId === userEmpresaId
   const esAdmin = session.user.role === "ADMIN"
+  const esUniversidad = session.user.role === "UNIVERSIDAD"
 
-  if (!esEmpresa && !esAdmin) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  const updateData: Record<string, string | boolean | null> = {}
+  if (estado !== undefined) {
+    if (!esEmpresa && !esAdmin) return NextResponse.json({ error: "No autorizado a cambiar estado" }, { status: 401 })
+    updateData.estado = estado
+  }
+  if (tutorAcademicoId !== undefined) {
+    if (!esAdmin && !esUniversidad) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    updateData.tutorAcademicoId = tutorAcademicoId || null
+  }
+  if (tutorEmpresaId !== undefined) {
+    if (!esAdmin && !esEmpresa) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+    updateData.tutorEmpresaId = tutorEmpresaId || null
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "Sin cambios" }, { status: 400 })
   }
 
   const updated = await prisma.postulacion.update({
     where: { id },
-    data: { estado },
+    data: updateData,
+    include: {
+      alumno: { select: { name: true, email: true } },
+      pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
+    },
   })
 
+  // Notificar al estudiante si cambió estado
+  if (estado && (estado === "ACEPTADO" || estado === "RECHAZADO" || estado === "REVISADO")) {
+    const emailContent = postulacionEstadoEmail({
+      nombre: updated.alumno.name,
+      pasantiaTitulo: updated.pasantia.titulo,
+      empresaNombre: updated.pasantia.empresa.nombre,
+      nuevoEstado: estado,
+    })
+    await sendEmail({ to: updated.alumno.email, ...emailContent })
+
+    const notifLabels: Record<string, string> = {
+      REVISADO: "revisada",
+      ACEPTADO: "aceptada",
+      RECHAZADO: "rechazada",
+    }
+    await crearNotificacion({
+      usuarioId: updated.alumnoId,
+      titulo: `Postulación ${notifLabels[estado] || estado}`,
+      mensaje: `Tu postulación a "${updated.pasantia.titulo}" en ${updated.pasantia.empresa.nombre} fue ${notifLabels[estado] || estado}`,
+      link: "/perfil/postulaciones",
+    })
+  }
+
   await logAudit(session.user.id, "CAMBIAR_ESTADO_POSTULACION",
-    `Cambió estado de postulación a ${estado}`, "Postulacion", id)
+    `Actualizó postulación`, "Postulacion", id)
 
   return NextResponse.json(updated)
 }
@@ -99,8 +170,8 @@ export async function GET(req: Request) {
   }
 
   if (session.user.role === "EMPRESA" || session.user.role === "ADMIN") {
-    const empresaId = (session.user as any).empresaId
-    const where: any = pasantiaId ? { pasantiaId } : {}
+    const empresaId = (session.user as { empresaId?: string }).empresaId
+    const where: Prisma.PostulacionWhereInput = pasantiaId ? { pasantiaId } : {}
     if (session.user.role === "EMPRESA") {
       where.pasantia = { empresaId }
     }

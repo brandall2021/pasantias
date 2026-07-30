@@ -5,10 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(date: Date | string) {
+export function formatDate(date: Date | string | null | undefined) {
+  if (!date) return "—"
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return "—"
   return new Intl.DateTimeFormat("es-AR", {
     dateStyle: "long",
-  }).format(new Date(date))
+  }).format(d)
 }
 
 export function calcularPromedio(puntuaciones: number[]) {

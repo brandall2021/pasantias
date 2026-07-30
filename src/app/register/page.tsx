@@ -88,16 +88,17 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Tipo de cuenta</Label>
-              <select
-                id="role"
-                name="role"
-                className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="ESTUDIANTE">Estudiante</option>
-                <option value="EMPRESA">Empresa</option>
-              </select>
+                <select
+                  id="role"
+                  name="role"
+                  className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  <option value="ESTUDIANTE">Estudiante</option>
+                  <option value="EMPRESA">Empresa</option>
+                  <option value="UNIVERSIDAD">Universidad</option>
+                </select>
             </div>
             {role === "EMPRESA" && (
               <>
@@ -108,6 +109,15 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="cuit">CUIT</Label>
                   <Input id="cuit" name="cuit" type="text" required placeholder="30-12345678-9" />
+                </div>
+              </>
+            )}
+
+            {role === "UNIVERSIDAD" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="universidadNombre">Nombre de la universidad</Label>
+                  <Input id="universidadNombre" name="universidadNombre" type="text" required placeholder="Universidad Nacional..." />
                 </div>
               </>
             )}

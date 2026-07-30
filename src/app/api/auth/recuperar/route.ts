@@ -3,7 +3,11 @@ import { prisma } from "@/lib/prisma"
 import { sendEmail, resetPasswordEmail } from "@/lib/email"
 import jwt from "jsonwebtoken"
 
-const RESET_SECRET = process.env.AUTH_SECRET || "fallback-secret"
+function getResetSecret(): string {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) throw new Error("AUTH_SECRET no configurado")
+  return secret
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,7 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Esta cuenta usa Google OAuth, no tiene contraseña" }, { status: 400 })
     }
 
-    const token = jwt.sign({ email: user.email }, RESET_SECRET, { expiresIn: "1h" })
+    const token = jwt.sign({ email: user.email }, getResetSecret(), { expiresIn: "1h" })
 
     const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000"
     const resetUrl = `${baseUrl}/restablecer/${token}`

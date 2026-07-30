@@ -1,27 +1,48 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { TogglePasantiaButton } from "./toggle-button"
 import { ESTADOS_PASANTIA } from "@/lib/constants"
 
-export default async function AdminPasantiasPage() {
+const PAGE_SIZE = 50
+
+export default async function AdminPasantiasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ skip?: string }>
+}) {
   const session = await auth()
   if (!session?.user || session.user.role !== "ADMIN") redirect("/login")
 
-  const pasantias = await prisma.pasantia.findMany({
-    include: {
-      empresa: { select: { nombre: true } },
-      _count: { select: { postulaciones: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  })
+  const { skip } = await searchParams
+  const skipNum = Math.max(parseInt(skip || "0"), 0)
+
+  const [pasantias, total] = await Promise.all([
+    prisma.pasantia.findMany({
+      include: {
+        empresa: { select: { nombre: true } },
+        _count: { select: { postulaciones: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: skipNum,
+      take: PAGE_SIZE,
+    }),
+    prisma.pasantia.count(),
+  ])
+
+  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const currentPage = Math.floor(skipNum / PAGE_SIZE) + 1
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Todas las Pasantías</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Todas las Pasantías</h1>
+        <p className="text-sm text-gray-500">{total} pasantías</p>
+      </div>
 
       <Card>
         <CardContent className="pt-6">
@@ -70,6 +91,26 @@ export default async function AdminPasantiasPage() {
           </div>
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Link
+            href={`/admin/pasantias?skip=${Math.max(skipNum - PAGE_SIZE, 0)}`}
+            className={`px-3 py-1.5 text-sm rounded border ${skipNum === 0 ? "pointer-events-none opacity-30" : "hover:bg-gray-100"}`}
+          >
+            ← Anterior
+          </Link>
+          <span className="text-sm text-gray-500">
+            Página {currentPage} de {totalPages}
+          </span>
+          <Link
+            href={`/admin/pasantias?skip=${skipNum + PAGE_SIZE}`}
+            className={`px-3 py-1.5 text-sm rounded border ${skipNum + PAGE_SIZE >= total ? "pointer-events-none opacity-30" : "hover:bg-gray-100"}`}
+          >
+            Siguiente →
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

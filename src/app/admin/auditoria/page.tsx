@@ -25,6 +25,7 @@ const ACCIONES = [
   { value: "BANEAR", label: "Banear/Desbanear" },
   { value: "MODIFICAR_PASANTIA", label: "Modificar pasantía" },
   { value: "ELIMINAR_USUARIO", label: "Eliminar usuario" },
+  { value: "CAMBIAR_ROL", label: "Cambiar rol" },
 ]
 
 const ACCION_COLORS: Record<string, string> = {
@@ -35,7 +36,10 @@ const ACCION_COLORS: Record<string, string> = {
   BANEAR: "bg-red-100 text-red-800",
   MODIFICAR_PASANTIA: "bg-yellow-100 text-yellow-800",
   ELIMINAR_USUARIO: "bg-red-100 text-red-800",
+  CAMBIAR_ROL: "bg-orange-100 text-orange-800",
 }
+
+const PAGE_SIZE = 100
 
 export default function AuditoriaPage() {
   const [logs, setLogs] = useState<AuditLog[]>([])
@@ -43,12 +47,14 @@ export default function AuditoriaPage() {
   const [loading, setLoading] = useState(true)
   const [filtroAccion, setFiltroAccion] = useState("")
   const [busqueda, setBusqueda] = useState("")
+  const [skip, setSkip] = useState(0)
 
   useEffect(() => {
     setLoading(true)
     const params = new URLSearchParams()
     if (filtroAccion) params.set("accion", filtroAccion)
-    params.set("limit", "200")
+    params.set("limit", String(PAGE_SIZE))
+    params.set("offset", String(skip))
 
     fetch(`/api/auditoria?${params}`)
       .then((res) => res.json())
@@ -58,7 +64,7 @@ export default function AuditoriaPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [filtroAccion])
+  }, [filtroAccion, skip])
 
   const filtrados = busqueda
     ? logs.filter((l) =>
@@ -92,7 +98,29 @@ export default function AuditoriaPage() {
         </Select>
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">{total} registros totales</p>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">{total} registros totales</p>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSkip(Math.max(skip - PAGE_SIZE, 0))}
+            disabled={skip === 0}
+            className="px-3 py-1.5 text-sm rounded border disabled:opacity-30 hover:bg-gray-100 disabled:hover:bg-transparent"
+          >
+            ← Anterior
+          </button>
+          <span className="text-sm text-gray-500">
+            Pág. {Math.floor(skip / PAGE_SIZE) + 1} de {Math.max(1, Math.ceil(total / PAGE_SIZE))}
+          </span>
+          <button
+            onClick={() => setSkip(skip + PAGE_SIZE)}
+            disabled={skip + PAGE_SIZE >= total}
+            className="px-3 py-1.5 text-sm rounded border disabled:opacity-30 hover:bg-gray-100 disabled:hover:bg-transparent"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <p className="text-gray-500">Cargando...</p>
@@ -128,7 +156,11 @@ export default function AuditoriaPage() {
                           "bg-gray-100 text-gray-800"
                         }`}>
                           {log.usuario.role === "ESTUDIANTE" ? "Estudiante" :
-                           log.usuario.role === "EMPRESA" ? "Empresa" : "Admin"}
+                           log.usuario.role === "EMPRESA" ? "Empresa" :
+                           log.usuario.role === "UNIVERSIDAD" ? "Univ." :
+                           log.usuario.role === "TUTOR_EMPRESA" ? "Tut.Emp" :
+                           log.usuario.role === "TUTOR_ACADEMICO" ? "Tut.Aca" :
+                           log.usuario.role === "ADMIN" ? "Admin" : log.usuario.role}
                         </span>
                       </td>
                       <td className="py-3 pr-4">
