@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 export function UpdateProfileForm({ user }: { user: any }) {
   const router = useRouter()
@@ -33,6 +34,9 @@ export function UpdateProfileForm({ user }: { user: any }) {
         body.legajo = formData.get("legajo") || undefined
         body.anioCursada = formData.get("anioCursada") || undefined
         body.promedio = formData.get("promedio") || undefined
+        body.habilidades = formData.get("habilidades") || undefined
+        body.cvUrl = formData.get("cvUrl") || undefined
+        body.materiasAprobadas = formData.get("materiasAprobadas") || undefined
       }
 
       const res = await fetch("/api/instituciones", {
@@ -124,6 +128,22 @@ export function UpdateProfileForm({ user }: { user: any }) {
           <div className="space-y-2">
             <Label htmlFor="promedio">Promedio general</Label>
             <Input id="promedio" name="promedio" defaultValue={user.promedio || ""} placeholder="Ej: 8.5" />
+          </div>
+
+          <div className="border-t pt-4 mt-2">
+            <p className="text-sm font-medium text-gray-500 mb-3">Historial laboral</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="habilidades">Habilidades</Label>
+            <Textarea id="habilidades" name="habilidades" defaultValue={user.habilidades || ""} placeholder="Separadas por comas" rows={3} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cvUrl">URL de CV</Label>
+            <Input id="cvUrl" name="cvUrl" defaultValue={user.cvUrl || ""} placeholder="https://" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="materiasAprobadas">Materias aprobadas</Label>
+            <Textarea id="materiasAprobadas" name="materiasAprobadas" defaultValue={user.materiasAprobadas || ""} placeholder="Lista de materias aprobadas" rows={3} />
           </div>
         </>
       )}

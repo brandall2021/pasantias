@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import Link from "next/link"
+import { Download } from "lucide-react"
 import { ConvenioUpload } from "@/components/convenio-upload"
 
 export default async function MisPostulacionesPage() {
@@ -61,7 +62,7 @@ export default async function MisPostulacionesPage() {
                           Postulado el {formatDate(p.fecha)}
                         </p>
                         {p.estado === "ACEPTADO" && (
-                          <div className="mt-3 pt-3 border-t" onClick={(e) => e.preventDefault()}>
+                          <div className="mt-3 pt-3 border-t space-y-3" onClick={(e) => e.preventDefault()}>
                             <p className="text-xs font-medium text-gray-700 mb-2">Convenio Tripartito</p>
                             <ConvenioUpload
                               postulacionId={p.id}
@@ -69,6 +70,22 @@ export default async function MisPostulacionesPage() {
                               parte="alumno"
                               label="Tu firma"
                             />
+                            <div className="flex flex-wrap gap-3 pt-2">
+                              <a
+                                href={`/api/pdf/convenio?postulacionId=${p.id}`}
+                                target="_blank"
+                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                              >
+                                <Download size={12} /> Convenio PDF
+                              </a>
+                              <a
+                                href={`/api/carta?postulacionId=${p.id}&tipo=presentacion`}
+                                target="_blank"
+                                className="text-xs text-green-600 hover:text-green-800 flex items-center gap-1"
+                              >
+                                <Download size={12} /> Carta de presentación
+                              </a>
+                            </div>
                           </div>
                         )}
                       </div>

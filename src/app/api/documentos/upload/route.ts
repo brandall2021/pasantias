@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { DocumentoRepository } from "@/repositories/documento.repository"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { randomUUID } from "crypto"
@@ -29,12 +29,10 @@ export async function POST(req: Request) {
     await mkdir(UPLOAD_DIR, { recursive: true })
     await writeFile(join(UPLOAD_DIR, filename), buffer)
 
-    const documento = await prisma.documento.create({
-      data: {
-        tipo: tipo as TipoDocumento,
-        url: `/api/uploads/${filename}`,
-        usuarioId: session.user.id,
-      },
+    const documento = await DocumentoRepository.create({
+      tipo: tipo as TipoDocumento,
+      url: `/api/uploads/${filename}`,
+      usuarioId: session.user.id,
     })
 
     return NextResponse.json(documento)

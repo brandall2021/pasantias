@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { ConvenioUpload } from "@/components/convenio-upload"
-import { BookOpen, Building2, FileText, Users } from "lucide-react"
+import { ConvenioMarcoList } from "./convenio-marco-form"
+import { SeguroForm } from "./seguro-form"
+import { BookOpen, Building2, Download, FileText, Users } from "lucide-react"
 
 export default async function UniversidadDashboard() {
   const session = await auth()
@@ -78,6 +80,17 @@ export default async function UniversidadDashboard() {
         <Card><CardContent className="pt-6 text-center"><p className={`text-2xl font-bold ${stats.conveniosPendientes > 0 ? "text-yellow-600" : "text-gray-600"}`}>{stats.conveniosPendientes}</p><p className="text-sm text-gray-500">Convenios pendientes</p></CardContent></Card>
       </div>
 
+      <div className="flex justify-end mb-6">
+        <a
+          href="/api/pdf/reportes"
+          target="_blank"
+          className="inline-flex items-center gap-2 rounded-lg bg-green-600 text-white hover:bg-green-700 h-10 px-4 text-sm font-medium transition-all duration-200"
+        >
+          <Download size={16} />
+          Descargar Reporte PDF
+        </a>
+      </div>
+
       {postulacionesPendientesConvenio.length > 0 && (
         <Card className="mb-6 border-yellow-200">
           <CardHeader>
@@ -87,19 +100,40 @@ export default async function UniversidadDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left"><th className="pb-2 font-medium">Alumno</th><th className="pb-2 font-medium">Pasantía</th><th className="pb-2 font-medium">Empresa</th><th className="pb-2 font-medium">Alumno</th><th className="pb-2 font-medium">Empresa</th><th className="pb-2 font-medium">Universidad</th><th className="pb-2 font-medium">Tutor Acad.</th><th className="pb-2 font-medium">Tutor Emp.</th></tr>
+                  <tr className="border-b text-left"><th className="pb-2 font-medium">Alumno</th><th className="pb-2 font-medium">Pasantía</th><th className="pb-2 font-medium">Empresa</th><th className="pb-2 font-medium">PDF</th><th className="pb-2 font-medium">Alumno</th><th className="pb-2 font-medium">Empresa</th><th className="pb-2 font-medium">Universidad</th><th className="pb-2 font-medium">Tutor Acad.</th><th className="pb-2 font-medium">Tutor Emp.</th><th className="pb-2 font-medium">Seguro</th></tr>
                 </thead>
                 <tbody>
                   {postulacionesPendientesConvenio.map((p) => (
                     <tr key={p.id} className="border-b last:border-0">
-                      <td className="py-2">{p.alumno.name}</td>
+                      <td className="py-2">
+                        <div className="flex items-center gap-1">
+                          {p.alumno.name}
+                          <a
+                            href={`/api/carta?postulacionId=${p.id}&tipo=presentacion`}
+                            title="Descargar carta de presentación"
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Download size={12} />
+                          </a>
+                        </div>
+                      </td>
                       <td className="py-2">{p.pasantia.titulo}</td>
                       <td className="py-2 text-xs">{p.pasantia.empresa.nombre}</td>
+                      <td className="py-2">
+                        <a
+                          href={`/api/pdf/convenio?postulacionId=${p.id}`}
+                          target="_blank"
+                          className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
+                        >
+                          <Download size={12} /> PDF
+                        </a>
+                      </td>
                       <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaAlumno || false} parte="alumno" label="Alumno" disabled /></td>
                       <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaEmpresa || false} parte="empresa" label="Empresa" disabled /></td>
                       <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaUniversidad || false} parte="universidad" label="Universidad" /></td>
                       <td className="py-2 text-xs text-gray-500">{p.tutorAcademico?.name || "—"}</td>
                       <td className="py-2 text-xs text-gray-500">{p.tutorEmpresa?.name || "—"}</td>
+                      <td className="py-2"><SeguroForm postulacionId={p.id} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -138,6 +172,10 @@ export default async function UniversidadDashboard() {
           )}
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <ConvenioMarcoList />
+      </div>
     </div>
   )
 }

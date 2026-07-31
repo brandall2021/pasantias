@@ -1,43 +1,36 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-
-function getResetSecret(): string {
-  const secret = process.env.AUTH_SECRET
-  if (!secret) throw new Error("AUTH_SECRET no configurado")
-  return secret
-}
+import { getAuthSecret } from "@/lib/config"
+import { restablecerSchema } from "@/lib/validations"
+import { UserRepository } from "@/repositories/user.repository"
 
 export async function POST(req: Request) {
   try {
-    const { token, password } = await req.json()
-
-    if (!token || !password) {
-      return NextResponse.json({ error: "Faltan datos" }, { status: 400 })
+    const parsed = restablecerSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Datos inválidos" },
+        { status: 400 }
+      )
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 })
-    }
+    const { token, password } = parsed.data
 
     let decoded: { email: string }
     try {
-      decoded = jwt.verify(token, getResetSecret()) as { email: string }
+      decoded = jwt.verify(token, getAuthSecret()) as { email: string }
     } catch {
       return NextResponse.json({ error: "El enlace ha expirado o es inválido" }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: decoded.email } })
+    const user = await UserRepository.findByEmail(decoded.email)
     if (!user) {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
     }
 
     const hashed = await bcrypt.hash(password, 12)
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashed },
-    })
+    await UserRepository.update(user.id, { password: hashed })
 
     return NextResponse.json({ success: true })
   } catch {

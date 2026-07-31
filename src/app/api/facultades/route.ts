@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { FacultadRepository } from "@/repositories/facultad.repository"
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
-  const universidadId = url.searchParams.get("universidadId")
+  const universidadId = url.searchParams.get("universidadId") || undefined
 
-  const where = universidadId ? { universidadId } : {}
-  const facultades = await prisma.facultad.findMany({
-    where,
-    include: { universidad: { select: { nombre: true } } },
-    orderBy: { nombre: "asc" },
-  })
+  const facultades = await FacultadRepository.findAll(universidadId)
   return NextResponse.json(facultades)
 }

@@ -1,15 +1,28 @@
 import type { DefaultSession } from "next-auth"
+import type { Role, EstadoPasantia, PostulacionEstado } from "@prisma/client"
+
+export type UserRole = Role
+
+export type { Role, EstadoPasantia, PostulacionEstado }
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string
-      role: string
-      empresaId?: string
-      universidadId?: string
-      carreraId?: string
+      role: UserRole
+      empresaId?: string | null
+      universidadId?: string | null
+      carreraId?: string | null
     } & DefaultSession["user"]
   }
 }
 
-export type UserRole = "ESTUDIANTE" | "EMPRESA" | "UNIVERSIDAD" | "ADMIN"
+declare module "@auth/core/jwt" {
+  interface JWT {
+    id: string
+    role: UserRole
+    empresaId?: string | null
+    universidadId?: string | null
+    carreraId?: string | null
+  }
+}

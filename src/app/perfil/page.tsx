@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { User, Mail, Building2, FileText, ClipboardList } from "lucide-react"
+import { User, Mail, Building2, FileText, ClipboardList, Briefcase, FileCheck, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { UpdateProfileForm } from "./update-profile-form"
 import { CambiarPasswordForm } from "./cambiar-password-form"
@@ -34,6 +34,48 @@ export default async function PerfilPage() {
           <UpdateProfileForm user={user} />
         </CardContent>
       </Card>
+
+      {user.role === "ESTUDIANTE" && (user.habilidades || user.cvUrl || user.materiasAprobadas) && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase size={20} />
+              Historial laboral
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {user.habilidades && (
+              <div className="flex items-start gap-3">
+                <FileCheck size={18} className="text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">Habilidades</p>
+                  <p className="text-sm whitespace-pre-wrap">{user.habilidades}</p>
+                </div>
+              </div>
+            )}
+            {user.cvUrl && (
+              <div className="flex items-start gap-3">
+                <FileText size={18} className="text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">URL de CV</p>
+                  <a href={user.cvUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 underline break-all">
+                    {user.cvUrl}
+                  </a>
+                </div>
+              </div>
+            )}
+            {user.materiasAprobadas && (
+              <div className="flex items-start gap-3">
+                <GraduationCap size={18} className="text-gray-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500">Materias aprobadas</p>
+                  <p className="text-sm whitespace-pre-wrap">{user.materiasAprobadas}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {!user.image && (
         <div className="mt-6">

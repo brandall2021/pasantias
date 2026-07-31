@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
 import { sendEmail, postulacionEstadoEmail } from "@/lib/email"
 import { crearNotificacion } from "@/lib/notificacion"
-import type { Prisma } from "@prisma/client"
+import { PasantiaRepository } from "@/repositories/pasantia.repository"
+import { PostulacionRepository } from "@/repositories/postulacion.repository"
+import { DocumentoRepository } from "@/repositories/documento.repository"
+import { ConversacionRepository } from "@/repositories/conversacion.repository"
+import { UserRepository } from "@/repositories/user.repository"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -15,49 +18,40 @@ export async function POST(req: Request) {
   try {
     const { pasantiaId, mensaje, documentos } = await req.json()
 
-    const pasantia = await prisma.pasantia.findUnique({ where: { id: pasantiaId } })
+    const pasantia = await PasantiaRepository.findByIdSimple(pasantiaId)
     if (!pasantia) return NextResponse.json({ error: "Pasantía no encontrada" }, { status: 404 })
     if (pasantia.estado !== "PUBLICADA") {
       return NextResponse.json({ error: "Esta pasantía no acepta postulaciones" }, { status: 400 })
     }
 
-    const existing = await prisma.postulacion.findUnique({
-      where: { pasantiaId_alumnoId: { pasantiaId, alumnoId: session.user.id } },
-    })
+    const existing = await PostulacionRepository.findByPasantiaYAlumno(pasantiaId, session.user.id)
     if (existing) {
       return NextResponse.json({ error: "Ya te postulaste a esta pasantía" }, { status: 400 })
     }
 
-    const postulacion = await prisma.postulacion.create({
-      data: {
-        pasantiaId,
-        alumnoId: session.user.id,
-        mensaje,
-      },
+    const postulacion = await PostulacionRepository.create({
+      pasantiaId,
+      alumnoId: session.user.id,
+      mensaje,
     })
 
     // Guardar documentos adjuntos
     if (documentos?.length > 0) {
-      await prisma.documento.createMany({
-        data: documentos.map((d: { tipo: string; url: string }) => ({
+      await DocumentoRepository.createMany(
+        documentos.map((d: { tipo: string; url: string }) => ({
           tipo: d.tipo,
           url: d.url,
           usuarioId: session.user.id,
           postulacionId: postulacion.id,
-        })),
-      })
+        }))
+      )
     }
 
     // Create conversacion automáticamente
-    await prisma.conversacion.create({
-      data: { postulacionId: postulacion.id },
-    })
+    await ConversacionRepository.create(postulacion.id)
 
     // Notificar a la empresa
-    const empresaUsuarios = await prisma.user.findMany({
-      where: { empresaId: pasantia.empresaId, deletedAt: null },
-      select: { id: true },
-    })
+    const empresaUsuarios = await UserRepository.findIdPorEmpresa(pasantia.empresaId)
     for (const u of empresaUsuarios) {
       await crearNotificacion({
         usuarioId: u.id,
@@ -80,13 +74,7 @@ export async function PATCH(req: Request) {
 
   const { id, estado, tutorAcademicoId, tutorEmpresaId } = await req.json()
 
-  const postulacion = await prisma.postulacion.findUnique({
-    where: { id },
-    include: {
-      pasantia: { include: { empresa: { select: { id: true } } } },
-      alumno: { select: { id: true } },
-    },
-  })
+  const postulacion = await PostulacionRepository.findByIdConPasantia(id)
   if (!postulacion) return NextResponse.json({ error: "No encontrada" }, { status: 404 })
 
   const userEmpresaId = (session.user as { empresaId?: string }).empresaId
@@ -112,14 +100,18 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Sin cambios" }, { status: 400 })
   }
 
-  const updated = await prisma.postulacion.update({
-    where: { id },
-    data: updateData,
-    include: {
+  const updated = (await PostulacionRepository.update(
+    id,
+    updateData,
+    {
       alumno: { select: { name: true, email: true } },
       pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
-    },
-  })
+    }
+  )) as unknown as {
+    alumno: { name: string; email: string }
+    pasantia: { titulo: string; empresa: { nombre: string } }
+    alumnoId: string
+  }
 
   // Notificar al estudiante si cambió estado
   if (estado && (estado === "ACEPTADO" || estado === "RECHAZADO" || estado === "REVISADO")) {
@@ -144,8 +136,7 @@ export async function PATCH(req: Request) {
     })
   }
 
-  await logAudit(session.user.id, "CAMBIAR_ESTADO_POSTULACION",
-    `Actualizó postulación`, "Postulacion", id)
+  await logAudit(session.user.id, "CAMBIAR_ESTADO_POSTULACION", `Actualizó postulación`, "Postulacion", id)
 
   return NextResponse.json(updated)
 }
@@ -155,36 +146,21 @@ export async function GET(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
   const url = new URL(req.url)
-  const pasantiaId = url.searchParams.get("pasantiaId")
+  const pasantiaId = url.searchParams.get("pasantiaId") || undefined
 
   if (session.user.role === "ESTUDIANTE") {
-    const postulaciones = await prisma.postulacion.findMany({
-      where: { alumnoId: session.user.id, ...(pasantiaId ? { pasantiaId } : {}) },
-      include: {
-        pasantia: { select: { id: true, titulo: true, area: true, modalidad: true, estado: true } },
-        convenio: true,
-      },
-      orderBy: { fecha: "desc" },
-    })
+    const postulaciones = await PostulacionRepository.findByAlumnoId(session.user.id, pasantiaId)
     return NextResponse.json(postulaciones)
   }
 
-  if (session.user.role === "EMPRESA" || session.user.role === "ADMIN") {
+  if (session.user.role === "EMPRESA") {
     const empresaId = (session.user as { empresaId?: string }).empresaId
-    const where: Prisma.PostulacionWhereInput = pasantiaId ? { pasantiaId } : {}
-    if (session.user.role === "EMPRESA") {
-      where.pasantia = { empresaId }
-    }
+    const postulaciones = await PostulacionRepository.findByEmpresaId(empresaId!, pasantiaId)
+    return NextResponse.json(postulaciones)
+  }
 
-    const postulaciones = await prisma.postulacion.findMany({
-      where,
-      include: {
-        alumno: { select: { name: true, email: true } },
-        pasantia: { select: { titulo: true } },
-        convenio: true,
-      },
-      orderBy: { fecha: "desc" },
-    })
+  if (session.user.role === "ADMIN") {
+    const postulaciones = await PostulacionRepository.findByPasantiaId(pasantiaId)
     return NextResponse.json(postulaciones)
   }
 

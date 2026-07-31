@@ -1,30 +1,40 @@
-import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { NextResponse } from "next/server"
 import { logAudit } from "@/lib/audit"
+import { registerSchema, parseDate } from "@/lib/validations"
+import { UserRepository } from "@/repositories/user.repository"
+import { EmpresaRepository } from "@/repositories/empresa.repository"
+import { UniversidadRepository } from "@/repositories/universidad.repository"
+import type { Prisma } from "@prisma/client"
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, ...extra } = await req.json()
+    const body = await req.json()
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 })
+    const parsed = registerSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Datos inválidos" },
+        { status: 400 }
+      )
     }
 
-    const exists = await prisma.user.findUnique({ where: { email } })
+    const { name, email, password, role, ...extra } = parsed.data
+
+    const exists = await UserRepository.findByEmail(email)
     if (exists) {
       return NextResponse.json({ error: "El email ya está registrado" }, { status: 400 })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const userData: any = {
+    const userData: Prisma.UserUncheckedCreateInput = {
       name,
       email,
       password: hashedPassword,
-      role: role || "ESTUDIANTE",
+      role,
       dni: extra.dni || undefined,
-      fechaNacimiento: extra.fechaNacimiento ? (() => { const d = new Date(extra.fechaNacimiento); if (isNaN(d.getTime())) return undefined; return d; })() : undefined,
+      fechaNacimiento: extra.fechaNacimiento ? parseDate(extra.fechaNacimiento) || undefined : undefined,
       direccion: extra.direccion || undefined,
       legajo: extra.legajo || undefined,
       anioCursada: extra.anioCursada || undefined,
@@ -35,8 +45,11 @@ export async function POST(req: Request) {
       if (!extra.empresaNombre || !extra.cuit) {
         return NextResponse.json({ error: "Nombre de empresa y CUIT requeridos" }, { status: 400 })
       }
-      const empresa = await prisma.empresa.create({
-        data: { nombre: extra.empresaNombre, cuit: extra.cuit, direccion: extra.direccion, email },
+      const empresa = await EmpresaRepository.create({
+        nombre: extra.empresaNombre,
+        cuit: extra.cuit,
+        direccion: extra.direccion,
+        email,
       })
       userData.empresaId = empresa.id
     }
@@ -45,8 +58,9 @@ export async function POST(req: Request) {
       if (!extra.universidadNombre) {
         return NextResponse.json({ error: "Nombre de universidad requerido" }, { status: 400 })
       }
-      const universidad = await prisma.universidad.create({
-        data: { nombre: extra.universidadNombre, email },
+      const universidad = await UniversidadRepository.create({
+        nombre: extra.universidadNombre,
+        email,
       })
       userData.universidadId = universidad.id
     }
@@ -55,7 +69,7 @@ export async function POST(req: Request) {
       userData.carreraId = extra.carreraId || undefined
     }
 
-    const user = await prisma.user.create({ data: userData })
+    const user = await UserRepository.create(userData)
 
     await logAudit(user.id, "REGISTRO", `Usuario ${role} registrado: ${email}`, "User", user.id)
 

@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import { mensajeSchema } from "@/lib/validations"
+import { ConversacionRepository } from "@/repositories/conversacion.repository"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -9,37 +10,26 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { postulacionId, texto } = await req.json()
-
-    if (!postulacionId || !texto) {
+    const parsed = mensajeSchema.safeParse(await req.json())
+    if (!parsed.success) {
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 })
     }
 
-    let conversacion = await prisma.conversacion.findUnique({
-      where: { postulacionId },
-    })
+    const { postulacionId, texto } = parsed.data
+
+    let conversacion = await ConversacionRepository.findByPostulacionId(postulacionId)
 
     if (!conversacion) {
-      conversacion = await prisma.conversacion.create({
-        data: { postulacionId },
-      })
+      conversacion = await ConversacionRepository.create(postulacionId)
     }
 
-    const mensaje = await prisma.mensaje.create({
-      data: {
-        conversacionId: conversacion.id,
-        autorId: session.user.id,
-        texto,
-      },
-      include: {
-        autor: { select: { id: true, name: true, image: true } },
-      },
+    const mensaje = await ConversacionRepository.crearMensaje({
+      conversacionId: conversacion.id,
+      autorId: session.user.id,
+      texto,
     })
 
-    await prisma.conversacion.update({
-      where: { id: conversacion.id },
-      data: { updatedAt: new Date() },
-    })
+    await ConversacionRepository.touch(conversacion.id)
 
     return NextResponse.json({ conversacion, mensaje })
   } catch {
@@ -53,30 +43,6 @@ export async function GET() {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 })
   }
 
-  const conversaciones = await prisma.conversacion.findMany({
-    where: {
-      postulacion: {
-        OR: [
-          { alumnoId: session.user.id },
-          { pasantia: { empresa: { usuarios: { some: { id: session.user.id } } } } },
-        ],
-      },
-    },
-    include: {
-      postulacion: {
-        select: {
-          id: true,
-          alumnoId: true,
-          pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
-        },
-      },
-      mensajes: {
-        orderBy: { fecha: "desc" },
-        take: 1,
-      },
-    },
-    orderBy: { updatedAt: "desc" },
-  })
-
+  const conversaciones = await ConversacionRepository.findAllParaUsuario(session.user.id)
   return NextResponse.json(conversaciones)
 }

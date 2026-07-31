@@ -5,6 +5,18 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import bcrypt from "bcryptjs"
 import { prisma } from "./prisma"
 import { logAudit } from "./audit"
+import type { Role } from "@/types"
+
+interface AuthUser {
+  id: string
+  email: string
+  name: string
+  image?: string | null
+  role: Role
+  empresaId?: string | null
+  universidadId?: string | null
+  carreraId?: string | null
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -41,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           empresaId: user.empresaId,
           universidadId: user.universidadId,
           carreraId: user.carreraId,
-        }
+        } as AuthUser
       },
     }),
     Google({ allowDangerousEmailAccountLinking: true }),
@@ -54,27 +66,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role
-        token.id = user.id
-        token.empresaId = (user as any).empresaId
-        token.universidadId = (user as any).universidadId
-        token.carreraId = (user as any).carreraId
+        const authUser = user as unknown as AuthUser
+        token.id = authUser.id
+        token.role = authUser.role
+        token.empresaId = authUser.empresaId
+        token.universidadId = authUser.universidadId
+        token.carreraId = authUser.carreraId
       }
-      if (account?.provider === "google") {
-        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } })
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id } })
         if (dbUser) token.role = dbUser.role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.role = token.role as string
-        session.user.id = token.id as string
-        ;(session.user as any).empresaId = token.empresaId as string
-        ;(session.user as any).universidadId = token.universidadId as string
-        ;(session.user as any).carreraId = token.carreraId as string
+        session.user.id = token.id
+        session.user.role = token.role
+        session.user.empresaId = token.empresaId
+        session.user.universidadId = token.universidadId
+        session.user.carreraId = token.carreraId
       }
       return session
     },

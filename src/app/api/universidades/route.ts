@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { UniversidadRepository } from "@/repositories/universidad.repository"
 
 export async function GET() {
-  const universidades = await prisma.universidad.findMany({
-    select: { id: true, nombre: true },
-    orderBy: { nombre: "asc" },
-  })
+  const universidades = await UniversidadRepository.findAllNombre()
   return NextResponse.json(universidades)
 }
 
@@ -13,6 +10,6 @@ export async function POST(req: Request) {
   const { nombre } = await req.json()
   if (!nombre) return NextResponse.json({ error: "Nombre requerido" }, { status: 400 })
 
-  const universidad = await prisma.universidad.create({ data: { nombre } })
+  const universidad = await UniversidadRepository.create({ nombre })
   return NextResponse.json(universidad)
 }

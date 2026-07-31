@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { AuditLogRepository } from "@/repositories/auditLog.repository"
+import type { Prisma } from "@prisma/client"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -15,20 +16,14 @@ export async function GET(req: Request) {
   const limit = parseInt(url.searchParams.get("limit") || "100")
   const offset = parseInt(url.searchParams.get("offset") || "0")
 
-  const where: any = {}
+  const where: Prisma.AuditLogWhereInput = {}
   if (userId) where.usuarioId = userId
   if (accion) where.accion = accion
   if (tabla) where.tabla = tabla
 
   const [logs, total] = await Promise.all([
-    prisma.auditLog.findMany({
-      where,
-      include: { usuario: { select: { name: true, email: true, role: true } } },
-      orderBy: { fecha: "desc" },
-      take: limit,
-      skip: offset,
-    }),
-    prisma.auditLog.count({ where }),
+    AuditLogRepository.findMany(where, limit, offset),
+    AuditLogRepository.count(where),
   ])
 
   return NextResponse.json({ logs, total })

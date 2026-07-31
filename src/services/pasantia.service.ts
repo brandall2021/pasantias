@@ -1,6 +1,8 @@
-import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
 import { sendEmail, pasantiaNotificationEmail } from "@/lib/email"
+import { PasantiaRepository } from "@/repositories/pasantia.repository"
+import { PostulacionRepository } from "@/repositories/postulacion.repository"
+import type { EstadoPasantia } from "@prisma/client"
 
 const ESTADO_TRANSITIONS: Record<string, string[]> = {
   BORRADOR: ["PUBLICADA", "CANCELADA"],
@@ -32,8 +34,8 @@ export class PasantiaService {
     unidadAcademicaId?: string
     usuarioId: string
   }) {
-    const pasantia = await prisma.pasantia.create({
-      data: {
+    const pasantia = await PasantiaRepository.createConDetalle(
+      {
         titulo: data.titulo,
         descripcion: data.descripcion,
         requisitos: data.requisitos,
@@ -46,12 +48,8 @@ export class PasantiaService {
         empresaId: data.empresaId,
         unidadAcademicaId: data.unidadAcademicaId || null,
         estado: "BORRADOR",
-      },
-      include: {
-        empresa: { select: { nombre: true, email: true } },
-        unidadAcademica: { select: { nombre: true, universidad: { select: { nombre: true, email: true } } } },
-      },
-    })
+      }
+    )
 
     await logAudit(data.usuarioId, "CREAR_PASANTIA", `Creó pasantía: ${pasantia.titulo}`, "Pasantia", pasantia.id)
 
@@ -76,11 +74,13 @@ export class PasantiaService {
     return pasantia
   }
 
-  static async cambiarEstado(pasantiaId: string, nuevoEstado: string, usuarioId: string, opts?: { role?: string }) {
-    const pasantiaActual = await prisma.pasantia.findUnique({
-      where: { id: pasantiaId },
-      select: { estado: true, titulo: true },
-    })
+  static async cambiarEstado(
+    pasantiaId: string,
+    nuevoEstado: string,
+    usuarioId: string,
+    opts?: { role?: string },
+  ) {
+    const pasantiaActual = await PasantiaRepository.findByIdSelectEstado(pasantiaId)
     if (!pasantiaActual) throw new Error("Pasantía no encontrada")
 
     const actual = pasantiaActual.estado
@@ -94,10 +94,7 @@ export class PasantiaService {
     }
 
     if (nuevoEstado === "ACTIVA") {
-      const postulacionesAceptadas = await prisma.postulacion.findMany({
-        where: { pasantiaId, estado: "ACEPTADO" },
-        include: { convenio: true },
-      })
+      const postulacionesAceptadas = await PostulacionRepository.findAceptadasConConvenio(pasantiaId)
 
       if (postulacionesAceptadas.length === 0) {
         throw new Error("No hay postulaciones aceptadas para esta pasantía")
@@ -110,38 +107,26 @@ export class PasantiaService {
       }
     }
 
-    const pasantia = await prisma.pasantia.update({
-      where: { id: pasantiaId },
-      data: { estado: nuevoEstado as any },
+    const pasantia = await PasantiaRepository.update(pasantiaId, {
+      estado: nuevoEstado as EstadoPasantia,
     })
 
-    await logAudit(usuarioId, "CAMBIAR_ESTADO_PASANTIA",
+    await logAudit(
+      usuarioId,
+      "CAMBIAR_ESTADO_PASANTIA",
       `Cambió estado de "${pasantiaActual.titulo}" a ${nuevoEstado}`,
-      "Pasantia", pasantiaId)
+      "Pasantia",
+      pasantiaId
+    )
 
     return pasantia
   }
 
   static async listarPublicadas() {
-    return prisma.pasantia.findMany({
-      where: { estado: "PUBLICADA", activo: true },
-      include: {
-        empresa: { select: { nombre: true } },
-        _count: { select: { postulaciones: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    })
+    return PasantiaRepository.findPublicadas()
   }
 
   static async obtenerPorId(id: string) {
-    return prisma.pasantia.findUnique({
-      where: { id },
-      include: {
-        empresa: { select: { nombre: true, logo: true } },
-        postulaciones: {
-          include: { alumno: { select: { name: true } } },
-        },
-      },
-    })
+    return PasantiaRepository.findByIdConDetalle(id)
   }
 }

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@prisma/client"
 import { Role } from "@prisma/client"
+import { UserRepository } from "@/repositories/user.repository"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -11,18 +10,10 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
-  const role = url.searchParams.get("role")
+  const roleParam = url.searchParams.get("role")
 
-  const where: Prisma.UserWhereInput = { deletedAt: null, baneado: false }
-  if (role && Object.values(Role).includes(role as Role)) {
-    where.role = role as Role
-  }
+  const role = roleParam && Object.values(Role).includes(roleParam as Role) ? (roleParam as Role) : undefined
 
-  const users = await prisma.user.findMany({
-    where,
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  })
-
+  const users = await UserRepository.findActivos(role)
   return NextResponse.json(users)
 }

@@ -1,57 +1,44 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, CheckCheck, ExternalLink } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
+import { PushSubscription } from "@/components/ui/push-subscription"
+import { useFetch } from "@/hooks/use-fetch"
+import { apiPatch } from "@/lib/api"
+import type { Notificacion } from "@/types/api"
 
-interface Notificacion {
-  id: string
-  titulo: string
-  mensaje: string | null
-  link: string | null
-  leida: boolean
-  createdAt: string
+interface NotificacionesResponse {
+  notificaciones: Notificacion[]
+  noLeidas: number
 }
 
 export default function NotificacionesPage() {
-  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([])
-  const [noLeidas, setNoLeidas] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const { data, loading, reload } = useFetch<NotificacionesResponse>("/api/notificaciones")
   const router = useRouter()
 
-  function cargar() {
-    fetch("/api/notificaciones")
-      .then((r) => r.json())
-      .then((data) => {
-        setNotificaciones(data.notificaciones || [])
-        setNoLeidas(data.noLeidas || 0)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { cargar() }, [])
+  const notificaciones = data?.notificaciones || []
+  const noLeidas = data?.noLeidas || 0
 
   async function marcarTodas() {
-    await fetch("/api/notificaciones", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ marcarTodas: true }),
-    })
-    cargar()
+    try {
+      await apiPatch("/api/notificaciones", { marcarTodas: true })
+      reload()
+    } catch {
+      // ignore
+    }
   }
 
   async function marcarUna(id: string, link?: string | null) {
-    await fetch("/api/notificaciones", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    })
+    try {
+      await apiPatch("/api/notificaciones", { id })
+    } catch {
+      // si falla la marcación no bloqueamos la navegación
+    }
     if (link) router.push(link)
-    else cargar()
+    else reload()
   }
 
   if (loading) return <div className="max-w-2xl mx-auto px-4 py-8 text-gray-500">Cargando...</div>
@@ -66,11 +53,14 @@ export default function NotificacionesPage() {
             <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full">{noLeidas} sin leer</span>
           )}
         </div>
-        {noLeidas > 0 && (
-          <Button size="sm" variant="secondary" onClick={marcarTodas}>
-            <CheckCheck size={14} /> Marcar todas leídas
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <PushSubscription />
+          {noLeidas > 0 && (
+            <Button size="sm" variant="secondary" onClick={marcarTodas}>
+              <CheckCheck size={14} /> Marcar todas leídas
+            </Button>
+          )}
+        </div>
       </div>
 
       {notificaciones.length === 0 ? (

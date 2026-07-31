@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { logAudit } from "@/lib/audit"
+import { EmpresaRepository } from "@/repositories/empresa.repository"
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -12,17 +12,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params
   const data = await req.json()
 
-  const empresa = await prisma.empresa.findUnique({ where: { id } })
+  const empresa = await EmpresaRepository.findById(id)
   if (!empresa) return NextResponse.json({ error: "No encontrada" }, { status: 404 })
 
-  const updated = await prisma.empresa.update({
-    where: { id },
-    data: { estado: data.estado },
-  })
+  const updated = await EmpresaRepository.update(id, { estado: data.estado })
 
-  await logAudit(session.user.id, "VALIDAR_EMPRESA",
+  await logAudit(
+    session.user.id,
+    "VALIDAR_EMPRESA",
     `${data.estado === "VALIDADA" ? "Validó" : data.estado === "RECHAZADA" ? "Rechazó" : "Revisó"} empresa: ${empresa.nombre}`,
-    "Empresa", id)
+    "Empresa",
+    id
+  )
 
   return NextResponse.json(updated)
 }

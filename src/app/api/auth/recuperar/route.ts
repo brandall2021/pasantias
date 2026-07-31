@@ -1,23 +1,20 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { sendEmail, resetPasswordEmail } from "@/lib/email"
 import jwt from "jsonwebtoken"
-
-function getResetSecret(): string {
-  const secret = process.env.AUTH_SECRET
-  if (!secret) throw new Error("AUTH_SECRET no configurado")
-  return secret
-}
+import { getAuthSecret, getBaseUrl } from "@/lib/config"
+import { recuperarSchema } from "@/lib/validations"
+import { UserRepository } from "@/repositories/user.repository"
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json()
-
-    if (!email) {
+    const parsed = recuperarSchema.safeParse(await req.json())
+    if (!parsed.success) {
       return NextResponse.json({ error: "Email requerido" }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const { email } = parsed.data
+
+    const user = await UserRepository.findByEmail(email)
     if (!user) {
       return NextResponse.json({ error: "Si el email existe, recibirás un enlace de recuperación" }, { status: 200 })
     }
@@ -26,10 +23,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Esta cuenta usa Google OAuth, no tiene contraseña" }, { status: 400 })
     }
 
-    const token = jwt.sign({ email: user.email }, getResetSecret(), { expiresIn: "1h" })
+    const token = jwt.sign({ email: user.email }, getAuthSecret(), { expiresIn: "1h" })
 
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000"
-    const resetUrl = `${baseUrl}/restablecer/${token}`
+    const resetUrl = `${getBaseUrl()}/restablecer/${token}`
 
     await sendEmail({
       to: user.email,

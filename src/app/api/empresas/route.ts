@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
+import { EmpresaRepository } from "@/repositories/empresa.repository"
 
 export async function GET() {
-  const empresas = await prisma.empresa.findMany({
-    select: { id: true, nombre: true, cuit: true, estado: true },
-    orderBy: { nombre: "asc" },
-  })
+  const empresas = await EmpresaRepository.findAllResumen()
   return NextResponse.json(empresas)
 }
 
@@ -17,11 +14,11 @@ export async function PATCH(req: Request) {
   const data = await req.json()
   const { id, ...updateData } = data
 
-  const userEmpresaId = (session.user as any).empresaId
+  const userEmpresaId = (session.user as { empresaId?: string }).empresaId
   if (id !== userEmpresaId && session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  const empresa = await prisma.empresa.update({ where: { id }, data: updateData })
+  const empresa = await EmpresaRepository.update(id, updateData)
   return NextResponse.json(empresa)
 }

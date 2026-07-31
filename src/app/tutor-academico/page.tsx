@@ -4,8 +4,10 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { FileText, User, BookOpen, Clock } from "lucide-react"
+import { FileText, User, BookOpen, Clock, Download } from "lucide-react"
 import { SeguimientoForm } from "./seguimiento-form"
+import { PlanTrabajoForm } from "./plan-trabajo-form"
+import { RegistroHorasForm } from "./registro-horas-form"
 
 export default async function TutorAcademicoDashboard() {
   const session = await auth()
@@ -19,7 +21,13 @@ export default async function TutorAcademicoDashboard() {
     include: {
       alumno: { select: { name: true, email: true, carrera: { select: { nombre: true, facultad: { select: { nombre: true, universidad: { select: { nombre: true } } } } } } } },
       pasantia: { select: { titulo: true, area: true, estado: true, empresa: { select: { nombre: true } } } },
-      convenio: { include: { seguimientos: { orderBy: { fecha: "desc" }, take: 5 } } },
+      convenio: {
+        include: {
+          seguimientos: { orderBy: { fecha: "desc" }, take: 5 },
+          planesTrabajo: { orderBy: { createdAt: "desc" } },
+          registroHoras: { orderBy: { fecha: "desc" } },
+        },
+      },
     },
     orderBy: { fecha: "desc" },
   })
@@ -59,9 +67,20 @@ export default async function TutorAcademicoDashboard() {
                   <p className="font-medium text-sm">{p.alumno.name}</p>
                   <p className="text-xs text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>
                 </div>
-                {p.alumno.carrera && (
-                  <span className="text-xs text-gray-400">{p.alumno.carrera.facultad.universidad.nombre}</span>
-                )}
+                <div className="flex items-center gap-2">
+                  {p.alumno.carrera && (
+                    <span className="text-xs text-gray-400">{p.alumno.carrera.facultad.universidad.nombre}</span>
+                  )}
+                  {p.convenio && (
+                    <a
+                      href={`/api/pdf/convenio?postulacionId=${p.id}`}
+                      target="_blank"
+                      className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                    >
+                      <Download size={12} /> PDF
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </CardContent>
@@ -76,43 +95,82 @@ export default async function TutorAcademicoDashboard() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {postulaciones.map((p) => (
-            <Card key={p.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <span>{p.alumno.name}</span>
-                      <Badge variant="secondary">{p.pasantia.area}</Badge>
-                    </CardTitle>
-                    <p className="text-sm text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>
+          {postulaciones.map((p) => {
+            const totalHoras = p.convenio?.registroHoras.reduce((sum, r) => sum + r.horas, 0) ?? 0
+            return (
+              <Card key={p.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <span>{p.alumno.name}</span>
+                        <Badge variant="secondary">{p.pasantia.area}</Badge>
+                      </CardTitle>
+                      <p className="text-sm text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {p.convenio && (
+                        <a
+                          href={`/api/pdf/convenio?postulacionId=${p.id}`}
+                          target="_blank"
+                          className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                        >
+                          <Download size={12} /> Convenio PDF
+                        </a>
+                      )}
+                      <Badge>{p.pasantia.estado}</Badge>
+                    </div>
                   </div>
-                  <Badge>{p.pasantia.estado}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1"><FileText size={12} /> Seguimiento</h4>
-                    {p.convenio?.seguimientos && p.convenio.seguimientos.length > 0 ? (
-                      <div className="space-y-1">
-                        {p.convenio.seguimientos.map((s) => (
-                          <div key={s.id} className="text-xs bg-gray-50 p-2 rounded">
-                            <span className="text-gray-400">{formatDate(s.fecha)}:</span> {s.descripcion}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-400">Sin seguimientos registrados</p>
-                    )}
-                    {p.convenio && (
-                      <SeguimientoForm postulacionId={p.id} />
-                    )}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div>
+                      <h4 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1"><FileText size={12} /> Seguimiento</h4>
+                      {p.convenio?.seguimientos && p.convenio.seguimientos.length > 0 ? (
+                        <div className="space-y-1">
+                          {p.convenio.seguimientos.map((s) => (
+                            <div key={s.id} className="text-xs bg-gray-50 p-2 rounded">
+                              <span className="text-gray-400">{formatDate(s.fecha)}:</span> {s.descripcion}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">Sin seguimientos registrados</p>
+                      )}
+                      {p.convenio && (
+                        <SeguimientoForm postulacionId={p.id} />
+                      )}
+                    </div>
+                    <div>
+                      {p.convenio && (
+                        <PlanTrabajoForm
+                          convenioId={p.convenio.id}
+                          initialPlans={p.convenio.planesTrabajo.map((pt) => ({
+                            ...pt,
+                            fechaInicio: pt.fechaInicio.toISOString(),
+                            fechaFin: pt.fechaFin.toISOString(),
+                            createdAt: pt.createdAt.toISOString(),
+                          }))}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      {p.convenio && (
+                        <RegistroHorasForm
+                          convenioId={p.convenio.id}
+                          initialRegistros={p.convenio.registroHoras.map((rh) => ({
+                            ...rh,
+                            fecha: rh.fecha.toISOString(),
+                          }))}
+                          initialTotal={totalHoras}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>

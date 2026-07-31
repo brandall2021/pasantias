@@ -50,6 +50,10 @@ enum EvaluacionTipo {
   EMPRESA_A_ALUMNO
   ALUMNO_A_EMPRESA
   TUTOR
+  INTERMEDIO_ALUMNO
+  INTERMEDIO_EMPRESA
+  FINAL_ALUMNO
+  FINAL_EMPRESA
 }
 
 enum TipoDocumento {
@@ -76,90 +80,98 @@ model Empresa {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  usuarios  User[]
-  pasantias Pasantia[]
+  usuarios       User[]
+  pasantias      Pasantia[]
+  conveniosMarco ConvenioMarco[]
 }
 
 // ─── Universidad / Estructura Académica ───────────────
 
 model Universidad {
-  id         String     @id @default(cuid())
-  nombre     String     @unique
-  direccion  String?
-  telefono   String?
-  email      String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  nombre    String   @unique
+  direccion String?
+  telefono  String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  facultades Facultad[]
-  usuarios   User[]
+  facultades     Facultad[]
+  usuarios       User[]
+  conveniosMarco ConvenioMarco[]
 }
 
 model Facultad {
-  id           String     @id @default(cuid())
-  nombre       String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  nombre    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   universidadId String
   universidad   Universidad @relation(fields: [universidadId], references: [id], onDelete: Cascade)
 
-  carreras      Carrera[]
+  carreras             Carrera[]
   pasantiasNotificadas Pasantia[] @relation("UnidadAcademica")
 }
 
 model Carrera {
-  id         String   @id @default(cuid())
-  nombre     String
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  nombre    String
+  createdAt DateTime @default(now())
 
   facultadId String
   facultad   Facultad @relation(fields: [facultadId], references: [id], onDelete: Cascade)
 
-  alumnos    User[]
+  alumnos User[]
 }
 
 // ─── Usuario ──────────────────────────────────────────
 
 model User {
-  id             String   @id @default(cuid())
-  name           String
-  email          String   @unique
-  password       String?
-  phone          String?
-  image          String?
-  role           Role     @default(ESTUDIANTE)
-  verified       Boolean  @default(false)
-  baneado        Boolean  @default(false)
-  motivoBaneo    String?
-  dni            String?
-  fechaNacimiento DateTime?
-  direccion      String?
-  legajo         String?
-  anioCursada    String?
-  promedio       String?
-  deletedAt      DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String?
+  phone             String?
+  image             String?
+  role              Role      @default(ESTUDIANTE)
+  verified          Boolean   @default(false)
+  baneado           Boolean   @default(false)
+  motivoBaneo       String?
+  dni               String?
+  fechaNacimiento   DateTime?
+  direccion         String?
+  legajo            String?
+  anioCursada       String?
+  promedio          String?
+  deletedAt         DateTime?
+  habilidades       String?
+  cvUrl             String?
+  materiasAprobadas String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   empresaId     String?
-  empresa       Empresa?      @relation(fields: [empresaId], references: [id])
+  empresa       Empresa?     @relation(fields: [empresaId], references: [id])
   universidadId String?
-  universidad   Universidad?  @relation(fields: [universidadId], references: [id])
+  universidad   Universidad? @relation(fields: [universidadId], references: [id])
   carreraId     String?
-  carrera       Carrera?      @relation(fields: [carreraId], references: [id])
+  carrera       Carrera?     @relation(fields: [carreraId], references: [id])
+
+  postulaciones           Postulacion[]   @relation("AlumnoPostulaciones")
+  postulacionesTutoriaAca Postulacion[]   @relation("TutorAcademicoAssign")
+  postulacionesTutoriaEmp Postulacion[]   @relation("TutorEmpresaAssign")
+  documentos              Documento[]
+  auditoria               AuditLog[]
+  mensajes                Mensaje[]
+  evaluaciones            Evaluacion[]
+  seguimientos            Seguimiento[]
+  notificaciones          Notificacion[]
+  pushSubscriptions       PushSubscription[]
+  planesTrabajo           PlanTrabajo[]
+  registroHoras           RegistroHoras[]
 
   @@index([deletedAt])
-
-  postulaciones             Postulacion[] @relation("AlumnoPostulaciones")
-  postulacionesTutoriaAca   Postulacion[] @relation("TutorAcademicoAssign")
-  postulacionesTutoriaEmp   Postulacion[] @relation("TutorEmpresaAssign")
-  documentos                Documento[]
-  auditoria                 AuditLog[]
-  mensajes                  Mensaje[]
-  evaluaciones              Evaluacion[]
-  seguimientos              Seguimiento[]
-  notificaciones            Notificacion[]
 }
 
 // ─── Pasantía ─────────────────────────────────────────
@@ -180,38 +192,39 @@ model Pasantia {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  empresaId       String
-  empresa         Empresa     @relation(fields: [empresaId], references: [id])
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
 
   unidadAcademicaId String?
   unidadAcademica   Facultad? @relation("UnidadAcademica", fields: [unidadAcademicaId], references: [id])
 
-  postulaciones  Postulacion[]
+  postulaciones Postulacion[]
 }
 
 // ─── Postulación ──────────────────────────────────────
 
 model Postulacion {
-  id      String             @id @default(cuid())
-  fecha   DateTime           @default(now())
-  estado  PostulacionEstado  @default(PENDIENTE)
+  id      String            @id @default(cuid())
+  fecha   DateTime          @default(now())
+  estado  PostulacionEstado @default(PENDIENTE)
   mensaje String?
 
-  alumnoId   String
-  alumno     User     @relation("AlumnoPostulaciones", fields: [alumnoId], references: [id], onDelete: Cascade)
+  alumnoId String
+  alumno   User   @relation("AlumnoPostulaciones", fields: [alumnoId], references: [id], onDelete: Cascade)
 
   pasantiaId String
   pasantia   Pasantia @relation(fields: [pasantiaId], references: [id], onDelete: Cascade)
 
   tutorAcademicoId String?
-  tutorAcademico   User?    @relation("TutorAcademicoAssign", fields: [tutorAcademicoId], references: [id])
+  tutorAcademico   User?   @relation("TutorAcademicoAssign", fields: [tutorAcademicoId], references: [id])
 
   tutorEmpresaId String?
-  tutorEmpresa   User?    @relation("TutorEmpresaAssign", fields: [tutorEmpresaId], references: [id])
+  tutorEmpresa   User?   @relation("TutorEmpresaAssign", fields: [tutorEmpresaId], references: [id])
 
-  convenio      Convenio?
-  conversacion  Conversacion?
-  documentos    Documento[]
+  convenio     Convenio?
+  conversacion Conversacion?
+  documentos   Documento[]
+  seguro       Seguro?
 
   @@unique([pasantiaId, alumnoId])
 }
@@ -230,8 +243,10 @@ model Convenio {
   postulacionId String      @unique
   postulacion   Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
 
-  seguimientos Seguimiento[]
-  evaluaciones Evaluacion[]
+  seguimientos  Seguimiento[]
+  evaluaciones  Evaluacion[]
+  planesTrabajo PlanTrabajo[]
+  registroHoras RegistroHoras[]
 }
 
 // ─── Conversación (Chat por postulación) ──────────────
@@ -248,15 +263,15 @@ model Conversacion {
 }
 
 model Mensaje {
-  id      String   @id @default(cuid())
-  texto   String
-  fecha   DateTime @default(now())
+  id    String   @id @default(cuid())
+  texto String
+  fecha DateTime @default(now())
 
   conversacionId String
   conversacion   Conversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
 
   autorId String
-  autor   User     @relation(fields: [autorId], references: [id])
+  autor   User   @relation(fields: [autorId], references: [id])
 }
 
 // ─── Documentos ───────────────────────────────────────
@@ -268,11 +283,11 @@ model Documento {
   verificado Boolean       @default(false)
   createdAt  DateTime      @default(now())
 
-  usuarioId      String
-  usuario        User          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  postulacionId  String?
-  postulacion    Postulacion?  @relation(fields: [postulacionId], references: [id])
+  postulacionId String?
+  postulacion   Postulacion? @relation(fields: [postulacionId], references: [id])
 }
 
 // ─── Seguimiento (bitácora del convenio) ──────────────
@@ -286,23 +301,109 @@ model Seguimiento {
   convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
 
   usuarioId String
-  usuario   User     @relation(fields: [usuarioId], references: [id])
+  usuario   User   @relation(fields: [usuarioId], references: [id])
 }
 
 // ─── Evaluaciones ─────────────────────────────────────
 
 model Evaluacion {
-  id        String           @id @default(cuid())
-  tipo      EvaluacionTipo
-  puntaje   Int
+  id         String         @id @default(cuid())
+  tipo       EvaluacionTipo
+  puntaje    Int
   comentario String?
-  fecha     DateTime         @default(now())
+  fecha      DateTime       @default(now())
 
   convenioId String
   convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
 
   autorId String
-  autor   User     @relation(fields: [autorId], references: [id])
+  autor   User   @relation(fields: [autorId], references: [id])
+}
+
+// ─── Plan de trabajo ──────────────────────────────────
+
+model PlanTrabajo {
+  id          String   @id @default(cuid())
+  objetivos   String
+  horasSemana Int
+  fechaInicio DateTime
+  fechaFin    DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  convenioId String
+  convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id])
+}
+
+// ─── Registro de horas ─────────────────────────────────
+
+model RegistroHoras {
+  id          String   @id @default(cuid())
+  fecha       DateTime @default(now())
+  horas       Int
+  descripcion String?
+  createdAt   DateTime @default(now())
+
+  convenioId String
+  convenio   Convenio @relation(fields: [convenioId], references: [id], onDelete: Cascade)
+
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id])
+}
+
+// ─── Convenio Marco (universidad-empresa) ──────────────
+
+model ConvenioMarco {
+  id          String    @id @default(cuid())
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  archivo     String?
+  estado      String    @default("ACTIVO")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  universidadId String
+  universidad   Universidad @relation(fields: [universidadId], references: [id])
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  @@unique([universidadId, empresaId])
+}
+
+// ─── Seguro ────────────────────────────────────────────
+
+model Seguro {
+  id             String   @id @default(cuid())
+  compania       String
+  poliza         String
+  coberturaDesde DateTime
+  coberturaHasta DateTime
+  archivo        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  postulacionId String      @unique
+  postulacion   Postulacion @relation(fields: [postulacionId], references: [id], onDelete: Cascade)
+}
+
+// ─── Push Subscriptions ─────────────────────────────
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  endpoint     String   @unique
+  p256dh       String
+  auth         String
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  usuarioId String
+  usuario   User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 // ─── Notificaciones ────────────────────────────────────
@@ -316,7 +417,7 @@ model Notificacion {
   createdAt DateTime @default(now())
 
   usuarioId String
-  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario   User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, leida])
 }
@@ -333,7 +434,7 @@ model AuditLog {
   fecha      DateTime @default(now())
 
   usuarioId String
-  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario   User   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId])
   @@index([accion])

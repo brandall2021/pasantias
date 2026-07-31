@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { marcarTodasLeidas, contarNoLeidas } from "@/lib/notificacion"
+import { contarNoLeidas, marcarTodasLeidas } from "@/lib/notificacion"
+import { NotificacionRepository } from "@/repositories/notificacion.repository"
 
 export async function GET() {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
   const [notificaciones, noLeidas] = await Promise.all([
-    prisma.notificacion.findMany({
-      where: { usuarioId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
+    NotificacionRepository.findByUsuarioId(session.user.id),
     contarNoLeidas(session.user.id),
   ])
 
@@ -31,10 +27,7 @@ export async function PATCH(req: Request) {
   }
 
   if (body.id) {
-    await prisma.notificacion.updateMany({
-      where: { id: body.id, usuarioId: session.user.id },
-      data: { leida: true },
-    })
+    await NotificacionRepository.marcarLeida(body.id, session.user.id)
     return NextResponse.json({ success: true })
   }
 

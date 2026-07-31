@@ -1,7 +1,9 @@
-import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { logAudit } from "@/lib/audit"
+import { UserRepository } from "@/repositories/user.repository"
+import { EmpresaRepository } from "@/repositories/empresa.repository"
+import { UniversidadRepository } from "@/repositories/universidad.repository"
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -9,26 +11,17 @@ export async function GET(req: Request) {
   const tipo = url.searchParams.get("tipo")
 
   if (tipo === "empresas") {
-    const empresas = await prisma.empresa.findMany({
-      select: { id: true, nombre: true },
-      orderBy: { nombre: "asc" },
-    })
+    const empresas = await EmpresaRepository.findAllNombre()
     return NextResponse.json(empresas)
   }
 
   if (tipo === "universidades") {
-    const universidades = await prisma.universidad.findMany({
-      select: { id: true, nombre: true },
-      orderBy: { nombre: "asc" },
-    })
+    const universidades = await UniversidadRepository.findAllNombre()
     return NextResponse.json(universidades)
   }
 
   if (id) {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: { empresa: true, universidad: true, carrera: true },
-    })
+    const user = await UserRepository.findByIdConInstituciones(id)
     if (!user) return NextResponse.json({ error: "No encontrado" }, { status: 404 })
     return NextResponse.json(user)
   }
@@ -48,13 +41,10 @@ export async function PATCH(req: Request) {
     if (isNaN(d.getTime())) {
       return NextResponse.json({ error: "Fecha de nacimiento inválida" }, { status: 400 })
     }
-    (updateData as any).fechaNacimiento = d
+    ;(updateData as { fechaNacimiento?: Date }).fechaNacimiento = d
   }
 
-  await prisma.user.update({
-    where: { id },
-    data: updateData,
-  })
+  await UserRepository.update(id, updateData)
 
   await logAudit(session.user.id, "MODIFICAR_PERFIL", "Actualizó su perfil")
 

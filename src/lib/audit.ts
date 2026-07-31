@@ -1,4 +1,4 @@
-import { prisma } from "./prisma"
+import { AuditLogRepository } from "@/repositories/auditLog.repository"
 
 export async function logAudit(
   usuarioId: string,
@@ -8,9 +8,7 @@ export async function logAudit(
   registroId?: string,
 ) {
   try {
-    await prisma.auditLog.create({
-      data: { usuarioId, accion, detalle, tabla, registroId },
-    })
+    await AuditLogRepository.create({ usuarioId, accion, detalle, tabla, registroId })
   } catch (error) {
     console.error("Error logging audit:", error)
   }

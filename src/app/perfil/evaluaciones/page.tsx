@@ -6,6 +6,23 @@ import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { EvaluacionForm } from "./evaluacion-form"
 
+const TIPO_LABELS: Record<string, string> = {
+  ALUMNO_A_EMPRESA: "Alumno → Empresa",
+  EMPRESA_A_ALUMNO: "Empresa → Alumno",
+  TUTOR: "Tutor",
+  INTERMEDIO_ALUMNO: "Intermedia - Alumno",
+  INTERMEDIO_EMPRESA: "Intermedia - Empresa",
+  FINAL_ALUMNO: "Final - Alumno",
+  FINAL_EMPRESA: "Final - Empresa",
+}
+
+const TIPOS_POR_ROL: Record<string, string[]> = {
+  ESTUDIANTE: ["ALUMNO_A_EMPRESA", "INTERMEDIO_ALUMNO", "FINAL_ALUMNO"],
+  EMPRESA: ["EMPRESA_A_ALUMNO", "INTERMEDIO_EMPRESA", "FINAL_EMPRESA"],
+  TUTOR_ACADEMICO: ["TUTOR"],
+  TUTOR_EMPRESA: ["TUTOR"],
+}
+
 export default async function EvaluacionesPage() {
   const session = await auth()
   if (!session?.user) redirect("/login")
@@ -38,6 +55,20 @@ export default async function EvaluacionesPage() {
         orderBy: { fecha: "desc" },
       })
     }
+  } else if (role === "TUTOR_ACADEMICO" || role === "TUTOR_EMPRESA") {
+    const tutorWhere = role === "TUTOR_ACADEMICO"
+      ? { tutorAcademicoId: userId }
+      : { tutorEmpresaId: userId }
+
+    postulacionesParaEvaluar = await prisma.postulacion.findMany({
+      where: { ...tutorWhere, pasantia: { estado: "FINALIZADA" } },
+      include: {
+        alumno: { select: { name: true } },
+        pasantia: { select: { titulo: true } },
+        convenio: { include: { evaluaciones: true } },
+      },
+      orderBy: { fecha: "desc" },
+    })
   }
 
   evaluacionesRealizadas = await prisma.evaluacion.findMany({
@@ -57,6 +88,8 @@ export default async function EvaluacionesPage() {
     orderBy: { fecha: "desc" },
   })
 
+  const tiposDelRol = TIPOS_POR_ROL[role] || []
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold mb-6">Evaluaciones</h1>
@@ -66,9 +99,13 @@ export default async function EvaluacionesPage() {
           <h2 className="text-lg font-semibold mb-3">Pasantías finalizadas por evaluar</h2>
           <div className="space-y-3">
             {postulacionesParaEvaluar.map((p) => {
-              const yaEvaluo = p.convenio?.evaluaciones?.some(
-                (e: any) => e.autorId === userId
+              const existingTipos = new Set(
+                (p.convenio?.evaluaciones || [])
+                  .filter((e: any) => e.autorId === userId)
+                  .map((e: any) => e.tipo)
               )
+              const availableTipos = tiposDelRol.filter((t) => !existingTipos.has(t))
+
               return (
                 <Card key={p.id}>
                   <CardContent className="pt-6">
@@ -76,19 +113,21 @@ export default async function EvaluacionesPage() {
                       <div>
                         <p className="font-medium">{p.pasantia.titulo}</p>
                         <p className="text-sm text-gray-500">
-                          {role === "EMPRESA" ? p.alumno.name : p.pasantia.empresa.nombre}
+                          {role === "EMPRESA" || role === "TUTOR_ACADEMICO" || role === "TUTOR_EMPRESA"
+                            ? p.alumno.name
+                            : p.pasantia.empresa.nombre}
                         </p>
                       </div>
-                      {yaEvaluo ? (
-                        <Badge variant="secondary">Ya evaluada</Badge>
-                      ) : (
-                        <Badge>Pendiente</Badge>
-                      )}
+                      <Badge variant={availableTipos.length === 0 ? "secondary" : "default"}>
+                        {availableTipos.length === 0
+                          ? "Completas"
+                          : `${availableTipos.length} pendiente${availableTipos.length > 1 ? "s" : ""}`}
+                      </Badge>
                     </div>
-                    {!yaEvaluo && (
+                    {availableTipos.length > 0 && (
                       <EvaluacionForm
                         postulacionId={p.id}
-                        tipo={role === "EMPRESA" ? "EMPRESA_A_ALUMNO" : "ALUMNO_A_EMPRESA"}
+                        availableTipos={availableTipos}
                       />
                     )}
                   </CardContent>
@@ -114,10 +153,7 @@ export default async function EvaluacionesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="font-medium text-sm">{e.convenio.postulacion.pasantia.titulo}</p>
-                    <p className="text-xs text-gray-500">
-                      {e.tipo === "EMPRESA_A_ALUMNO" ? "Empresa → Alumno" :
-                       e.tipo === "ALUMNO_A_EMPRESA" ? "Alumno → Empresa" : "Tutor"}
-                    </p>
+                    <p className="text-xs text-gray-500">{TIPO_LABELS[e.tipo] || e.tipo}</p>
                     {e.comentario && <p className="text-sm text-gray-600 mt-1">{e.comentario}</p>}
                   </div>
                   <div className="text-right">

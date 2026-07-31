@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@prisma/client"
+import { UniversidadRepository } from "@/repositories/universidad.repository"
+import { PasantiaRepository } from "@/repositories/pasantia.repository"
+import { PostulacionRepository } from "@/repositories/postulacion.repository"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -15,23 +16,17 @@ export async function GET(req: Request) {
   let csv = ""
   let filename = ""
 
-  if (tipo === "pasantias") {
-    const facultadIds = session.user.role === "UNIVERSIDAD"
-      ? (await prisma.universidad.findUnique({
-          where: { id: (session.user as { universidadId: string }).universidadId },
-          select: { facultades: { select: { id: true } } },
-        }))?.facultades.map((f) => f.id) ?? []
-      : undefined
-    const where: Prisma.PasantiaWhereInput = facultadIds ? { unidadAcademicaId: { in: facultadIds } } : {}
+  const obtenerFacultadIds = async () => {
+    if (session.user.role !== "UNIVERSIDAD") return undefined
+    const universidadId = (session.user as { universidadId?: string }).universidadId
+    if (!universidadId) return undefined
+    const result = await UniversidadRepository.findFacultadesIds(universidadId)
+    return result?.facultades.map((f) => f.id) ?? []
+  }
 
-    const pasantias = await prisma.pasantia.findMany({
-      where,
-      include: {
-        empresa: { select: { nombre: true } },
-        unidadAcademica: { select: { nombre: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    })
+  if (tipo === "pasantias") {
+    const facultadIds = await obtenerFacultadIds()
+    const pasantias = await PasantiaRepository.findExportables(facultadIds)
 
     csv = "Título,Empresa,Área,Modalidad,Estado,Facultad,Publicada\n"
     for (const p of pasantias) {
@@ -39,22 +34,8 @@ export async function GET(req: Request) {
     }
     filename = "pasantias.csv"
   } else if (tipo === "postulaciones") {
-    const facultadIds = session.user.role === "UNIVERSIDAD"
-      ? (await prisma.universidad.findUnique({
-          where: { id: (session.user as { universidadId: string }).universidadId },
-          select: { facultades: { select: { id: true } } },
-        }))?.facultades.map((f) => f.id) ?? []
-      : undefined
-    const where: Prisma.PostulacionWhereInput = facultadIds ? { pasantia: { unidadAcademicaId: { in: facultadIds } } } : {}
-
-    const postulaciones = await prisma.postulacion.findMany({
-      where,
-      include: {
-        alumno: { select: { name: true, email: true } },
-        pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
-      },
-      orderBy: { fecha: "desc" },
-    })
+    const facultadIds = await obtenerFacultadIds()
+    const postulaciones = await PostulacionRepository.findExportables(facultadIds)
 
     csv = "Estudiante,Email,Pasantía,Empresa,Estado,Fecha\n"
     for (const p of postulaciones) {
