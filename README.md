@@ -166,6 +166,21 @@ npm run dev
 
 **Importante:** Usar `npm run prisma` en lugar de `npx prisma` (Prisma v6).
 
+### Tests
+
+```bash
+npm test
+```
+
+Suite de tests unitarios con **Vitest** (`tests/`) sobre las validaciones de negocio, con
+repositorios mockeados (no requiere base de datos):
+
+| Archivo | Cubre |
+|---------|-------|
+| `tests/plan-trabajo.service.test.ts` | Rango de fechas del plan, horas semanales 1–40, registros fuera de rango, duplicados por día, notificaciones |
+| `tests/pasantia.service.test.ts` | Transiciones de estado, rol para publicar, firmas del convenio, seguro obligatorio y vigencia para ACTIVA |
+| `tests/postulaciones.route.test.ts` | Autorización del PATCH, cupo de vacantes (400 cuando está lleno) |
+
 ### Proxy / protección de rutas
 
 El proyecto usa un **proxy** (`src/proxy.ts`, reemplaza al `middleware.ts` deprecado en Next.js 16).
@@ -301,8 +316,9 @@ agendar la ejecución diaria con cron del host:
 
 | Método | Ruta | Auth | Descripción |
 |--------|------|------|-------------|
-| GET | `/api/analytics` | Universidad/Admin | Pasantías por facultad, resumen, horas por mes |
 | GET | `/api/cron?token=<CRON_SECRET>` | Token | Ejecutar recordatorios automáticos |
+
+> El panel analítico de `/universidad/reportes` consume `AnalyticsService` directamente (server component); no hay API pública de analytics.
 
 ### Admin
 
