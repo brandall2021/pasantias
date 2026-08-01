@@ -11,7 +11,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?callbackUrl=" + encodeURIComponent(pathname), request.url))
   }
 
-  if ((pathname.startsWith("/perfil") || pathname.startsWith("/chat") || pathname.startsWith("/universidad") || pathname.startsWith("/tutor-academico") || pathname.startsWith("/tutor-empresa") || pathname.startsWith("/notificaciones") || pathname.startsWith("/calendario")) && !sessionToken) {
+  if ((pathname.startsWith("/perfil") || pathname.startsWith("/chat") || pathname.startsWith("/universidad") || pathname.startsWith("/tutor-academico") || pathname.startsWith("/tutor-empresa") || pathname.startsWith("/notificaciones") || pathname.startsWith("/calendario") || pathname.startsWith("/dashboard")) && !sessionToken) {
     return NextResponse.redirect(new URL("/login?callbackUrl=" + encodeURIComponent(pathname), request.url))
   }
 

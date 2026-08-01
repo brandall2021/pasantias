@@ -3,6 +3,7 @@ import { SessionProvider } from "next-auth/react"
 import { auth } from "@/lib/auth"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { AppShell } from "@/components/layout/app-shell"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -19,9 +20,15 @@ export default async function RootLayout({
     <html lang="es">
       <body className="min-h-screen flex flex-col bg-gray-50">
         <SessionProvider session={session}>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          {session?.user ? (
+            <AppShell>{children}</AppShell>
+          ) : (
+            <>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </>
+          )}
         </SessionProvider>
       </body>
     </html>

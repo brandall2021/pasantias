@@ -233,7 +233,8 @@ agendar la ejecución diaria con cron del host:
 
 | Ruta | Acceso | Descripción |
 |------|--------|-------------|
-| `/` | Público | Landing page |
+| `/` | Público | Landing page SaaS (redirige a `/dashboard` si hay sesión) |
+| `/dashboard` | Auth | Dashboard moderno con KPIs, actividad reciente y accesos por rol |
 | `/login` | Público | Inicio de sesión |
 | `/register` | Público | Registro |
 | `/pasantias` | Público | Catálogo de pasantías activas |
