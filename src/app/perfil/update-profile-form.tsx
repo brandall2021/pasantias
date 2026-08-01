@@ -7,7 +7,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-export function UpdateProfileForm({ user }: { user: any }) {
+export interface ProfileUser {
+  id: string
+  role: string
+  name: string | null
+  email: string | null
+  phone: string | null
+  direccion: string | null
+  dni: string | null
+  fechaNacimiento: Date | string | null
+  legajo: string | null
+  anioCursada: string | null
+  promedio: string | null
+  habilidades: string | null
+  cvUrl: string | null
+  materiasAprobadas: string | null
+  carrera?: { nombre: string } | null
+  empresa?: { nombre: string; direccion: string | null } | null
+}
+
+export function UpdateProfileForm({ user }: { user: ProfileUser }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -20,7 +39,7 @@ export function UpdateProfileForm({ user }: { user: any }) {
     const formData = new FormData(e.currentTarget)
 
     try {
-      const body: Record<string, any> = {
+      const body: Record<string, unknown> = {
         id: user.id,
         name: formData.get("name"),
         phone: formData.get("phone") || undefined,
@@ -66,11 +85,11 @@ export function UpdateProfileForm({ user }: { user: any }) {
       )}
       <div className="space-y-2">
         <Label htmlFor="name">Nombre completo</Label>
-        <Input id="name" name="name" defaultValue={user.name} required />
+        <Input id="name" name="name" defaultValue={user.name || ""} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" value={user.email} disabled className="bg-gray-50" />
+        <Input id="email" value={user.email || ""} disabled className="bg-gray-50" />
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone">Teléfono</Label>

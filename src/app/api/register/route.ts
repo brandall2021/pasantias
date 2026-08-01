@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     await logAudit(user.id, "REGISTRO", `Usuario ${role} registrado: ${email}`, "User", user.id)
 
     return NextResponse.json({ id: user.id, name: user.name, email: user.email, role: user.role })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error al registrar" }, { status: 500 })
   }
 }

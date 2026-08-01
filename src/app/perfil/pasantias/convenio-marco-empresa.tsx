@@ -9,25 +9,25 @@ import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { FileText, Plus, X } from "lucide-react"
 
-interface Empresa {
+interface Universidad {
   id: string
   nombre: string
 }
 
 interface ConvenioMarco {
   id: string
-  empresaId: string
-  empresa: { nombre: string }
+  universidadId: string
+  universidad: { nombre: string }
   fechaInicio: string
   fechaFin: string | null
   estado: string
 }
 
-export function ConvenioMarcoList() {
+export function ConvenioMarcoEmpresa() {
   const [convenios, setConvenios] = useState<ConvenioMarco[]>([])
-  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [universidades, setUniversidades] = useState<Universidad[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [empresaId, setEmpresaId] = useState("")
+  const [universidadId, setUniversidadId] = useState("")
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFin, setFechaFin] = useState("")
   const [saving, setSaving] = useState(false)
@@ -38,60 +38,43 @@ export function ConvenioMarcoList() {
       .then((r) => r.json())
       .then(setConvenios)
       .catch(() => {})
-    fetch("/api/empresas")
+    fetch("/api/universidades")
       .then((r) => r.json())
-      .then(setEmpresas)
+      .then(setUniversidades)
       .catch(() => {})
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!empresaId || !fechaInicio) return
+    if (!universidadId || !fechaInicio) return
     setSaving(true)
     setError("")
     try {
       const res = await fetch("/api/convenios-marco", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ empresaId, fechaInicio, fechaFin: fechaFin || undefined }),
+        body: JSON.stringify({
+          universidadId,
+          fechaInicio,
+          fechaFin: fechaFin || undefined,
+        }),
       })
       if (!res.ok) {
         const err = await res.json()
-        setError(err.error || "Error al crear")
+        setError(err.error || "Error al solicitar")
         setSaving(false)
         return
       }
       const nuevo = await res.json()
       setConvenios((prev) => [nuevo, ...prev])
       setShowForm(false)
-      setEmpresaId("")
+      setUniversidadId("")
       setFechaInicio("")
       setFechaFin("")
       setSaving(false)
     } catch {
       setError("Error de conexión")
       setSaving(false)
-    }
-  }
-
-  async function cambiarEstado(id: string, estado: string) {
-    setError("")
-    try {
-      const res = await fetch("/api/convenios-marco", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, estado }),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        setError(err.error || "Error")
-        return
-      }
-      setConvenios((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, estado } : c))
-      )
-    } catch {
-      setError("Error de conexión")
     }
   }
 
@@ -110,7 +93,7 @@ export function ConvenioMarcoList() {
           </CardTitle>
           <Button size="sm" variant="outline" onClick={() => setShowForm(!showForm)}>
             {showForm ? <X size={14} /> : <Plus size={14} />}
-            {showForm ? "Cancelar" : "Nuevo convenio"}
+            {showForm ? "Cancelar" : "Solicitar convenio"}
           </Button>
         </div>
       </CardHeader>
@@ -118,16 +101,16 @@ export function ConvenioMarcoList() {
         {showForm && (
           <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg space-y-3">
             <div>
-              <Label>Empresa</Label>
+              <Label>Universidad</Label>
               <select
                 className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-                value={empresaId}
-                onChange={(e) => setEmpresaId(e.target.value)}
+                value={universidadId}
+                onChange={(e) => setUniversidadId(e.target.value)}
                 required
               >
-                <option value="">Seleccionar empresa</option>
-                {empresas.map((emp) => (
-                  <option key={emp.id} value={emp.id}>{emp.nombre}</option>
+                <option value="">Seleccionar universidad</option>
+                {universidades.map((u) => (
+                  <option key={u.id} value={u.id}>{u.nombre}</option>
                 ))}
               </select>
             </div>
@@ -140,47 +123,33 @@ export function ConvenioMarcoList() {
               <Input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
+            <p className="text-xs text-gray-500">La solicitud queda pendiente de aprobación por la universidad.</p>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? "Guardando..." : "Crear convenio marco"}
+              {saving ? "Enviando..." : "Solicitar convenio marco"}
             </Button>
           </form>
         )}
 
         {convenios.length === 0 ? (
-          <p className="text-sm text-gray-500">No hay convenios marco.</p>
+          <p className="text-sm text-gray-500">No hay convenios marco con universidades.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-2 font-medium">Empresa</th>
+                  <th className="pb-2 font-medium">Universidad</th>
                   <th className="pb-2 font-medium">Inicio</th>
                   <th className="pb-2 font-medium">Fin</th>
                   <th className="pb-2 font-medium">Estado</th>
-                  {convenios.some((c) => c.estado === "SOLICITADO") && (
-                    <th className="pb-2 font-medium">Acciones</th>
-                  )}
                 </tr>
               </thead>
               <tbody>
                 {convenios.map((c) => (
                   <tr key={c.id} className="border-b last:border-0">
-                    <td className="py-2 font-medium">{c.empresa.nombre}</td>
+                    <td className="py-2 font-medium">{c.universidad.nombre}</td>
                     <td className="py-2 text-xs text-gray-500">{formatDate(c.fechaInicio)}</td>
                     <td className="py-2 text-xs text-gray-500">{c.fechaFin ? formatDate(c.fechaFin) : "—"}</td>
                     <td className="py-2">{estadoBadge(c.estado)}</td>
-                    {c.estado === "SOLICITADO" && (
-                      <td className="py-2">
-                        <div className="flex gap-2">
-                          <Button size="sm" className="text-xs h-7 px-2" onClick={() => cambiarEstado(c.id, "ACTIVO")}>
-                            Aprobar
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-xs h-7 px-2 text-red-600" onClick={() => cambiarEstado(c.id, "RECHAZADO")}>
-                            Rechazar
-                          </Button>
-                        </div>
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

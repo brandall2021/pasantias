@@ -27,4 +27,8 @@ export class ConvenioMarcoRepository {
       orderBy: { createdAt: "desc" },
     })
   }
+
+  static update(id: string, data: Prisma.ConvenioMarcoUncheckedUpdateInput) {
+    return prisma.convenioMarco.update({ where: { id }, data })
+  }
 }

@@ -88,6 +88,7 @@ export const evaluacionSchema = z.object({
 
 export const convenioMarcoSchema = z.object({
   empresaId: z.string().min(1),
+  universidadId: z.string().optional(),
   fechaInicio: z.string().min(1),
   fechaFin: z.string().optional(),
   archivo: z.string().optional(),

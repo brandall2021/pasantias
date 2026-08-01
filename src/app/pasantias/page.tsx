@@ -4,8 +4,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { AREAS, ESTADOS_PASANTIA } from "@/lib/constants"
+import { AREAS } from "@/lib/constants"
 import { SearchIcon } from "lucide-react"
+import type { Prisma } from "@prisma/client"
 
 interface Props {
   searchParams: Promise<{ q?: string; area?: string; modalidad?: string }>
@@ -14,7 +15,7 @@ interface Props {
 export default async function PasantiasPage({ searchParams }: Props) {
   const params = await searchParams
 
-  const where: any = { activo: true, estado: "PUBLICADA" }
+  const where: Prisma.PasantiaWhereInput = { activo: true, estado: "PUBLICADA" }
   if (params.q) {
     where.OR = [
       { titulo: { contains: params.q, mode: "insensitive" } },

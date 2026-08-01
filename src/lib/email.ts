@@ -108,6 +108,30 @@ export function postulacionEstadoEmail({
   }
 }
 
+export function recordatorioEmail({
+  nombre,
+  titulo,
+  mensaje,
+}: {
+  nombre: string
+  titulo: string
+  mensaje: string
+}) {
+  return {
+    subject: `Recordatorio: ${titulo}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a56db;">${titulo}</h2>
+        <p>Hola <strong>${nombre}</strong>,</p>
+        <p>${mensaje}</p>
+        <p style="color: #6b7280; font-size: 14px;">Ingresá a la plataforma para ver los detalles y completar la gestión.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #9ca3af;">Sistema de Pasantías</p>
+      </div>
+    `,
+  }
+}
+
 export function resetPasswordEmail({ name, url }: { name: string; url: string }) {
   return {
     subject: "Recuperación de contraseña - Sistema de Pasantías",

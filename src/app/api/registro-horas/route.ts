@@ -17,15 +17,20 @@ export async function POST(req: Request) {
 
   const { convenioId, horas, descripcion, fecha } = parsed.data
 
-  const registro = await PlanTrabajoService.registrarHoras({
-    convenioId,
-    horas,
-    descripcion,
-    usuarioId: session.user.id,
-    fecha: fecha ? new Date(fecha) : undefined,
-  })
+  try {
+    const registro = await PlanTrabajoService.registrarHoras({
+      convenioId,
+      horas,
+      descripcion,
+      usuarioId: session.user.id,
+      fecha: fecha ? new Date(fecha) : undefined,
+    })
 
-  return NextResponse.json(registro)
+    return NextResponse.json(registro)
+  } catch (error) {
+    const mensaje = error instanceof Error ? error.message : "Error al registrar horas"
+    return NextResponse.json({ error: mensaje }, { status: 400 })
+  }
 }
 
 export async function GET(req: Request) {

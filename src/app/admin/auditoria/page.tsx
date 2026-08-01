@@ -50,20 +50,26 @@ export default function AuditoriaPage() {
   const [skip, setSkip] = useState(0)
 
   useEffect(() => {
-    setLoading(true)
     const params = new URLSearchParams()
     if (filtroAccion) params.set("accion", filtroAccion)
     params.set("limit", String(PAGE_SIZE))
     params.set("offset", String(skip))
 
+    let activo = true
     fetch(`/api/auditoria?${params}`)
       .then((res) => res.json())
       .then((data) => {
+        if (!activo) return
         setLogs(data.logs || [])
         setTotal(data.total || 0)
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (activo) setLoading(false)
+      })
+    return () => {
+      activo = false
+    }
   }, [filtroAccion, skip])
 
   const filtrados = busqueda
@@ -91,7 +97,7 @@ export default function AuditoriaPage() {
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
-        <Select value={filtroAccion} onChange={(e: any) => setFiltroAccion(e.target.value)}>
+        <Select value={filtroAccion} onChange={(e) => { setLoading(true); setFiltroAccion(e.target.value) }}>
           {ACCIONES.map((a) => (
             <option key={a.value} value={a.value}>{a.label}</option>
           ))}
@@ -103,7 +109,7 @@ export default function AuditoriaPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setSkip(Math.max(skip - PAGE_SIZE, 0))}
+            onClick={() => { setLoading(true); setSkip(Math.max(skip - PAGE_SIZE, 0)) }}
             disabled={skip === 0}
             className="px-3 py-1.5 text-sm rounded border disabled:opacity-30 hover:bg-gray-100 disabled:hover:bg-transparent"
           >
@@ -113,7 +119,7 @@ export default function AuditoriaPage() {
             Pág. {Math.floor(skip / PAGE_SIZE) + 1} de {Math.max(1, Math.ceil(total / PAGE_SIZE))}
           </span>
           <button
-            onClick={() => setSkip(skip + PAGE_SIZE)}
+            onClick={() => { setLoading(true); setSkip(skip + PAGE_SIZE) }}
             disabled={skip + PAGE_SIZE >= total}
             className="px-3 py-1.5 text-sm rounded border disabled:opacity-30 hover:bg-gray-100 disabled:hover:bg-transparent"
           >

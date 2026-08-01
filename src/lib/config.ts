@@ -22,6 +22,9 @@ export const config = {
     publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "",
     privateKey: process.env.VAPID_PRIVATE_KEY || "",
   },
+  cron: {
+    secret: process.env.CRON_SECRET || "",
+  },
   nodeEnv: process.env.NODE_ENV || "development",
 } as const
 

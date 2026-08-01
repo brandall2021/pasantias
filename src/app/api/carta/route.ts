@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { generarCartaPDF } from "@/lib/pdf"
+import { PostulacionRepository } from "@/repositories/postulacion.repository"
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -13,13 +13,7 @@ export async function GET(req: Request) {
 
   if (!postulacionId) return NextResponse.json({ error: "Falta postulacionId" }, { status: 400 })
 
-  const postulacion = await prisma.postulacion.findUnique({
-    where: { id: postulacionId },
-    include: {
-      alumno: { select: { name: true, dni: true } },
-      pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
-    },
-  })
+  const postulacion = await PostulacionRepository.findByIdParaCarta(postulacionId)
   if (!postulacion) return NextResponse.json({ error: "Postulación no encontrada" }, { status: 404 })
 
   const pdf = generarCartaPDF({

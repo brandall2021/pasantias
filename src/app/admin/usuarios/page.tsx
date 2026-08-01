@@ -4,7 +4,6 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { formatDate } from "@/lib/utils"
 import { BanUserButton } from "./ban-button"
 

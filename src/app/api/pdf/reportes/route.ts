@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import PDFDocument from "pdfkit"
+import { UniversidadRepository } from "@/repositories/universidad.repository"
+import { PasantiaRepository } from "@/repositories/pasantia.repository"
+import { PostulacionRepository } from "@/repositories/postulacion.repository"
 
-export async function GET(req: Request) {
+export async function GET() {
   const session = await auth()
   if (!session?.user || (session.user.role !== "UNIVERSIDAD" && session.user.role !== "ADMIN")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
@@ -12,10 +14,7 @@ export async function GET(req: Request) {
   const universidadId = (session.user as { universidadId?: string }).universidadId
   if (!universidadId) return NextResponse.json({ error: "Sin universidad" }, { status: 400 })
 
-  const facultadIds = (await prisma.universidad.findUnique({
-    where: { id: universidadId },
-    select: { facultades: { select: { id: true, nombre: true } } },
-  }))?.facultades || []
+  const facultadIds = (await UniversidadRepository.findFacultadesConNombre(universidadId))?.facultades || []
 
   const doc = new PDFDocument({ margin: 50, size: "A4" })
   const buffers: Buffer[] = []
@@ -27,13 +26,7 @@ export async function GET(req: Request) {
   doc.moveDown(1.5)
 
   for (const fac of facultadIds) {
-    const pasantias = await prisma.pasantia.findMany({
-      where: { unidadAcademicaId: fac.id },
-      include: {
-        empresa: { select: { nombre: true } },
-        _count: { select: { postulaciones: true } },
-      },
-    })
+    const pasantias = await PasantiaRepository.findByFacultadIds([fac.id])
 
     const activas = pasantias.filter((p) => p.estado === "ACTIVA" || p.estado === "PUBLICADA").length
     const finalizadas = pasantias.filter((p) => p.estado === "FINALIZADA").length
@@ -58,10 +51,9 @@ export async function GET(req: Request) {
   doc.fontSize(10).font("Helvetica-Bold").text("Resumen General", { align: "center" })
   doc.moveDown(0.5)
   doc.fontSize(10).font("Helvetica")
-  const totalPostulaciones = await prisma.postulacion.count({
-    where: { pasantia: { unidadAcademicaId: { in: facultadIds.map((f) => f.id) } } },
-  })
-  doc.text(`Total de pasantías: ${await prisma.pasantia.count({ where: { unidadAcademicaId: { in: facultadIds.map((f) => f.id) } } })}`)
+  const totalPostulaciones = await PostulacionRepository.countByFacultadIds(facultadIds.map((f) => f.id))
+  const totalPasantias = await PasantiaRepository.countByFacultadIds(facultadIds.map((f) => f.id))
+  doc.text(`Total de pasantías: ${totalPasantias}`)
   doc.text(`Total de postulaciones: ${totalPostulaciones}`)
 
   doc.end()

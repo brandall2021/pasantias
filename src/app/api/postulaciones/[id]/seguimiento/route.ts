@@ -13,7 +13,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const seguimiento = await ConvenioService.agregarSeguimiento(id, descripcion, session.user.id)
     return NextResponse.json(seguimiento)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+  } catch (error) {
+    const mensaje = error instanceof Error ? error.message : "Error al agregar seguimiento"
+    return NextResponse.json({ error: mensaje }, { status: 400 })
   }
 }

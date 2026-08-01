@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { logAudit } from "@/lib/audit"
+import { crearNotificacion } from "@/lib/notificacion"
 import { convenioMarcoSchema } from "@/lib/validations"
 import { ConvenioMarcoRepository } from "@/repositories/convenioMarco.repository"
+import { UserRepository } from "@/repositories/user.repository"
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user || (session.user.role !== "UNIVERSIDAD" && session.user.role !== "ADMIN")) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
   const parsed = convenioMarcoSchema.safeParse(await req.json())
   if (!parsed.success) {
@@ -20,9 +20,17 @@ export async function POST(req: Request) {
 
   const { empresaId, fechaInicio, fechaFin, archivo } = parsed.data
 
-  const universidadId = session.user.role === "UNIVERSIDAD"
-    ? (session.user as { universidadId?: string }).universidadId
-    : null
+  let universidadId: string | null = null
+  let estado = "ACTIVO"
+
+  if (session.user.role === "UNIVERSIDAD" || session.user.role === "ADMIN") {
+    universidadId = session.user.role === "UNIVERSIDAD"
+      ? (session.user as { universidadId?: string }).universidadId || null
+      : (parsed.data as { universidadId?: string }).universidadId || null
+  } else if (session.user.role === "EMPRESA") {
+    universidadId = (parsed.data as { universidadId?: string }).universidadId || null
+    estado = "SOLICITADO"
+  }
 
   if (!universidadId) {
     return NextResponse.json({ error: "Universidad no encontrada" }, { status: 400 })
@@ -39,16 +47,47 @@ export async function POST(req: Request) {
     fechaInicio: new Date(fechaInicio),
     fechaFin: fechaFin ? new Date(fechaFin) : null,
     archivo,
+    estado,
   })
 
   await logAudit(
     session.user.id,
     "CREAR_CONVENIO_MARCO",
-    `Convenio marco con empresa ${empresaId}`,
+    `Convenio marco ${estado === "SOLICITADO" ? "solicitado por empresa" : "creado"} ${empresaId}`,
     "ConvenioMarco",
     convenio.id
   )
 
+  if (estado === "SOLICITADO") {
+    const univUsers = await UserRepository.findIdPorUniversidad(universidadId)
+    for (const u of univUsers) {
+      await crearNotificacion({
+        usuarioId: u.id,
+        titulo: "Solicitud de convenio marco",
+        mensaje: `Una empresa solicitó un convenio marco. Revisá la solicitud.`,
+        link: "/universidad",
+      })
+    }
+  }
+
+  return NextResponse.json(convenio)
+}
+
+export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+
+  const { id, estado } = await req.json()
+  if (!id || !["ACTIVO", "RECHAZADO"].includes(estado)) {
+    return NextResponse.json({ error: "estado inválido" }, { status: 400 })
+  }
+
+  if (session.user.role !== "UNIVERSIDAD" && session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Solo la universidad puede aprobar/rechazar" }, { status: 401 })
+  }
+
+  const convenio = await ConvenioMarcoRepository.update(id, { estado })
+  await logAudit(session.user.id, "CAMBIAR_ESTADO_CONVENIO_MARCO", `Convenio marco ${estado}`, "ConvenioMarco", id)
   return NextResponse.json(convenio)
 }
 

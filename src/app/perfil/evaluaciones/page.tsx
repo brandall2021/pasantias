@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { EvaluacionForm } from "./evaluacion-form"
+import type { EvaluacionTipo } from "@prisma/client"
 
 const TIPO_LABELS: Record<string, string> = {
   ALUMNO_A_EMPRESA: "Alumno → Empresa",
@@ -16,7 +17,7 @@ const TIPO_LABELS: Record<string, string> = {
   FINAL_EMPRESA: "Final - Empresa",
 }
 
-const TIPOS_POR_ROL: Record<string, string[]> = {
+const TIPOS_POR_ROL: Record<string, EvaluacionTipo[]> = {
   ESTUDIANTE: ["ALUMNO_A_EMPRESA", "INTERMEDIO_ALUMNO", "FINAL_ALUMNO"],
   EMPRESA: ["EMPRESA_A_ALUMNO", "INTERMEDIO_EMPRESA", "FINAL_EMPRESA"],
   TUTOR_ACADEMICO: ["TUTOR"],
@@ -30,48 +31,51 @@ export default async function EvaluacionesPage() {
   const userId = session.user.id
   const role = session.user.role
 
-  let postulacionesParaEvaluar: any[] = []
-  let evaluacionesRealizadas: any[] = []
+  const postulacionesParaEvaluar = await (async () => {
+    const includeComun = {
+      convenio: { include: { evaluaciones: true } },
+      orderBy: { fecha: "desc" as const },
+    }
 
-  if (role === "ESTUDIANTE") {
-    postulacionesParaEvaluar = await prisma.postulacion.findMany({
-      where: { alumnoId: userId, pasantia: { estado: "FINALIZADA" } },
-      include: {
-        pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
-        convenio: { include: { evaluaciones: true } },
-      },
-      orderBy: { fecha: "desc" },
-    })
-  } else if (role === "EMPRESA") {
-    const empresaId = (session.user as any).empresaId
-    if (empresaId) {
-      postulacionesParaEvaluar = await prisma.postulacion.findMany({
+    if (role === "ESTUDIANTE") {
+      return prisma.postulacion.findMany({
+        where: { alumnoId: userId, pasantia: { estado: "FINALIZADA" } },
+        include: {
+          pasantia: { select: { titulo: true, empresa: { select: { nombre: true } } } },
+          ...includeComun,
+        },
+      })
+    }
+    if (role === "EMPRESA") {
+      const empresaId = (session.user as { empresaId?: string }).empresaId
+      if (!empresaId) return []
+      return prisma.postulacion.findMany({
         where: { pasantia: { empresaId, estado: "FINALIZADA" } },
         include: {
           alumno: { select: { name: true } },
           pasantia: { select: { titulo: true } },
-          convenio: { include: { evaluaciones: true } },
+          ...includeComun,
         },
-        orderBy: { fecha: "desc" },
       })
     }
-  } else if (role === "TUTOR_ACADEMICO" || role === "TUTOR_EMPRESA") {
-    const tutorWhere = role === "TUTOR_ACADEMICO"
-      ? { tutorAcademicoId: userId }
-      : { tutorEmpresaId: userId }
+    if (role === "TUTOR_ACADEMICO" || role === "TUTOR_EMPRESA") {
+      const tutorWhere = role === "TUTOR_ACADEMICO"
+        ? { tutorAcademicoId: userId }
+        : { tutorEmpresaId: userId }
 
-    postulacionesParaEvaluar = await prisma.postulacion.findMany({
-      where: { ...tutorWhere, pasantia: { estado: "FINALIZADA" } },
-      include: {
-        alumno: { select: { name: true } },
-        pasantia: { select: { titulo: true } },
-        convenio: { include: { evaluaciones: true } },
-      },
-      orderBy: { fecha: "desc" },
-    })
-  }
+      return prisma.postulacion.findMany({
+        where: { ...tutorWhere, pasantia: { estado: "FINALIZADA" } },
+        include: {
+          alumno: { select: { name: true } },
+          pasantia: { select: { titulo: true } },
+          ...includeComun,
+        },
+      })
+    }
+    return []
+  })()
 
-  evaluacionesRealizadas = await prisma.evaluacion.findMany({
+  const evaluacionesRealizadas = await prisma.evaluacion.findMany({
     where: { autorId: userId },
     include: {
       convenio: {
@@ -101,10 +105,14 @@ export default async function EvaluacionesPage() {
             {postulacionesParaEvaluar.map((p) => {
               const existingTipos = new Set(
                 (p.convenio?.evaluaciones || [])
-                  .filter((e: any) => e.autorId === userId)
-                  .map((e: any) => e.tipo)
+                  .filter((e) => e.autorId === userId)
+                  .map((e) => e.tipo)
               )
               const availableTipos = tiposDelRol.filter((t) => !existingTipos.has(t))
+              const nombreAlumno = "alumno" in p && p.alumno ? p.alumno.name : null
+              const nombreEmpresa = "empresa" in p.pasantia && p.pasantia.empresa
+                ? p.pasantia.empresa.nombre
+                : null
 
               return (
                 <Card key={p.id}>
@@ -113,9 +121,7 @@ export default async function EvaluacionesPage() {
                       <div>
                         <p className="font-medium">{p.pasantia.titulo}</p>
                         <p className="text-sm text-gray-500">
-                          {role === "EMPRESA" || role === "TUTOR_ACADEMICO" || role === "TUTOR_EMPRESA"
-                            ? p.alumno.name
-                            : p.pasantia.empresa.nombre}
+                          {nombreAlumno || nombreEmpresa}
                         </p>
                       </div>
                       <Badge variant={availableTipos.length === 0 ? "secondary" : "default"}>

@@ -16,7 +16,16 @@ export class PostulacionRepository {
     return prisma.postulacion.findUnique({
       where: { id },
       include: {
-        pasantia: { include: { empresa: { select: { id: true } } } },
+        pasantia: {
+          include: { empresa: { select: { id: true } } },
+          select: {
+            titulo: true,
+            vacantes: true,
+            empresaId: true,
+            estado: true,
+            empresa: { select: { id: true } },
+          },
+        },
         alumno: { select: { id: true } },
       },
     })
@@ -160,7 +169,13 @@ export class PostulacionRepository {
   static findAceptadasConConvenio(pasantiaId: string) {
     return prisma.postulacion.findMany({
       where: { pasantiaId, estado: "ACEPTADO" },
-      include: { convenio: true },
+      include: { convenio: true, seguro: true },
+    })
+  }
+
+  static countAceptadas(pasantiaId: string) {
+    return prisma.postulacion.count({
+      where: { pasantiaId, estado: "ACEPTADO" },
     })
   }
 

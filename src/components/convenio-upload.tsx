@@ -10,9 +10,10 @@ interface ConvenioUploadProps {
   parte: "alumno" | "empresa" | "universidad"
   label: string
   disabled?: boolean
+  fechaFirma?: string | null
 }
 
-export function ConvenioUpload({ postulacionId, firmado, parte, label, disabled }: ConvenioUploadProps) {
+export function ConvenioUpload({ postulacionId, firmado, parte, label, disabled, fechaFirma }: ConvenioUploadProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -49,6 +50,11 @@ export function ConvenioUpload({ postulacionId, firmado, parte, label, disabled 
           <CheckCircle size={12} />
           <span className="font-medium">{label}: Firmado</span>
         </div>
+        {fechaFirma && (
+          <p className="text-gray-500 mt-0.5">
+            {new Date(fechaFirma).toLocaleDateString("es-AR")} {new Date(fechaFirma).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        )}
       </div>
     )
   }

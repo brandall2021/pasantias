@@ -14,6 +14,27 @@ export class PlanTrabajoRepository {
     })
   }
 
+  static findUltimoPlan(convenioId: string) {
+    return prisma.planTrabajo.findFirst({
+      where: { convenioId },
+      orderBy: { createdAt: "desc" },
+    })
+  }
+
+  static findRegistroDuplicado(convenioId: string, usuarioId: string, fecha: Date) {
+    const start = new Date(fecha)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(fecha)
+    end.setHours(23, 59, 59, 999)
+    return prisma.registroHoras.findFirst({
+      where: {
+        convenioId,
+        usuarioId,
+        fecha: { gte: start, lte: end },
+      },
+    })
+  }
+
   static crearRegistroHoras(data: Prisma.RegistroHorasUncheckedCreateInput) {
     return prisma.registroHoras.create({ data })
   }

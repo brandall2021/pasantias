@@ -16,7 +16,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const evaluacion = await ConvenioService.evaluar(id, tipo, puntaje, comentario, session.user.id)
     return NextResponse.json(evaluacion)
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+  } catch (error) {
+    const mensaje = error instanceof Error ? error.message : "Error al evaluar"
+    return NextResponse.json({ error: mensaje }, { status: 400 })
   }
 }

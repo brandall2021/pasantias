@@ -2,10 +2,8 @@
 
 import { useSession } from "next-auth/react"
 import { useEffect, useState, useRef } from "react"
-import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { formatDate } from "@/lib/utils"
 import { Send, MessageSquare } from "lucide-react"
@@ -27,7 +25,6 @@ interface Mensaje {
 
 export default function ChatPage() {
   const { data: session } = useSession()
-  const router = useRouter()
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [mensajes, setMensajes] = useState<Mensaje[]>([])

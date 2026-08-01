@@ -1,5 +1,6 @@
 import { logAudit } from "@/lib/audit"
 import { crearNotificacion } from "@/lib/notificacion"
+import { generarFirmaElectronica } from "@/lib/firma"
 import { ConvenioRepository } from "@/repositories/convenio.repository"
 import { PostulacionRepository } from "@/repositories/postulacion.repository"
 import { UserRepository } from "@/repositories/user.repository"
@@ -17,6 +18,9 @@ export class ConvenioService {
     const postulacion = await PostulacionRepository.findByIdConPasantiaEmpresa(postulacionId)
     if (!postulacion) throw new Error("Postulación no encontrada")
 
+    const usuario = await UserRepository.findById(usuarioId)
+    if (!usuario) throw new Error("Usuario no encontrado")
+
     // Find or create convenio
     let convenio = await ConvenioRepository.findByPostulacionId(postulacionId)
     if (!convenio) {
@@ -24,13 +28,36 @@ export class ConvenioService {
       convenio = { ...nuevo, seguimientos: [], evaluaciones: [] }
     }
 
-    const updateData: Record<string, boolean> = {}
+    const firma = generarFirmaElectronica({
+      convenioId: convenio.id,
+      postulacionId,
+      pasantiaTitulo: postulacion.pasantia.titulo,
+      parte,
+      usuarioId,
+      usuarioNombre: usuario.name,
+    })
+
     const parteMap: Record<string, string> = {
       alumno: "firmaAlumno",
       empresa: "firmaEmpresa",
       universidad: "firmaUniversidad",
     }
-    updateData[parteMap[parte]] = true
+    const hashMap: Record<string, string> = {
+      alumno: "firmaAlumnoHash",
+      empresa: "firmaEmpresaHash",
+      universidad: "firmaUniversidadHash",
+    }
+    const fechaMap: Record<string, string> = {
+      alumno: "firmaAlumnoFecha",
+      empresa: "firmaEmpresaFecha",
+      universidad: "firmaUniversidadFecha",
+    }
+
+    const updateData: Record<string, string | boolean | Date> = {
+      [parteMap[parte]]: true,
+      [hashMap[parte]]: firma.hash,
+      [fechaMap[parte]]: firma.fecha,
+    }
 
     await ConvenioRepository.update(convenio.id, updateData)
     const actualizado = await ConvenioRepository.findByPostulacionId(postulacionId)
@@ -44,7 +71,7 @@ export class ConvenioService {
     await logAudit(
       usuarioId,
       "FIRMAR_CONVENIO",
-      `${parte} firmó convenio para: ${postulacion.pasantia.titulo}`,
+      `${parte} firmó electrónicamente el convenio para: ${postulacion.pasantia.titulo}`,
       "Convenio",
       convenio.id
     )

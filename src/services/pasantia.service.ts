@@ -104,6 +104,12 @@ export class PasantiaService {
         if (!p.convenio || !p.convenio.firmaAlumno || !p.convenio.firmaEmpresa || !p.convenio.firmaUniversidad) {
           throw new Error("Hay postulaciones aceptadas sin convenio tripartito completado")
         }
+        if (!p.seguro) {
+          throw new Error("Hay postulaciones aceptadas sin seguro de pasantía cargado")
+        }
+        if (new Date(p.seguro.coberturaHasta) < new Date()) {
+          throw new Error("Hay un seguro de pasantía vencido. Renovalo antes de activar")
+        }
       }
     }
 

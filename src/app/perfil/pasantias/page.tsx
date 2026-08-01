@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus } from "lucide-react"
 import { ESTADOS_PASANTIA } from "@/lib/constants"
+import { ConvenioMarcoEmpresa } from "./convenio-marco-empresa"
 
 export default async function MisPasantiasPage() {
   const session = await auth()
@@ -69,6 +70,10 @@ export default async function MisPasantiasPage() {
           })}
         </div>
       )}
+
+      <div className="mt-8">
+        <ConvenioMarcoEmpresa />
+      </div>
     </div>
   )
 }

@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button"
 export function ValidarEmpresaButton({
   empresaId,
   estado,
-  nombre,
 }: {
   empresaId: string
   estado: string
-  nombre: string
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)

@@ -11,6 +11,12 @@ export class PlanTrabajoService {
     fechaFin: Date
     usuarioId: string
   }) {
+    if (data.fechaInicio >= data.fechaFin) {
+      throw new Error("La fecha de inicio debe ser anterior a la fecha de fin")
+    }
+    if (data.horasSemana <= 0 || data.horasSemana > 40) {
+      throw new Error("Las horas semanales deben estar entre 1 y 40")
+    }
     return PlanTrabajoRepository.create(data)
   }
 
@@ -25,12 +31,31 @@ export class PlanTrabajoService {
     usuarioId: string
     fecha?: Date
   }) {
+    const fecha = data.fecha || new Date()
+
+    const plan = await PlanTrabajoRepository.findUltimoPlan(data.convenioId)
+    if (!plan) {
+      throw new Error("No existe un plan de trabajo para registrar horas")
+    }
+    if (fecha < plan.fechaInicio || fecha > plan.fechaFin) {
+      throw new Error("La fecha del registro está fuera del rango del plan de trabajo")
+    }
+
+    const duplicado = await PlanTrabajoRepository.findRegistroDuplicado(
+      data.convenioId,
+      data.usuarioId,
+      fecha
+    )
+    if (duplicado) {
+      throw new Error("Ya registraste horas este día")
+    }
+
     const registro = await PlanTrabajoRepository.crearRegistroHoras({
       convenioId: data.convenioId,
       horas: data.horas,
       descripcion: data.descripcion,
       usuarioId: data.usuarioId,
-      fecha: data.fecha || new Date(),
+      fecha,
     })
 
     const convenio = await ConvenioRepository.findByIdConPostulacion(data.convenioId)

@@ -16,7 +16,6 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const file = formData.get("file") as File | null
     const tipo = formData.get("tipo") as string
-    const nombre = formData.get("nombre") as string
 
     if (!file || !tipo) {
       return NextResponse.json({ error: "Faltan campos: file, tipo" }, { status: 400 })
@@ -36,7 +35,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(documento)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error al subir archivo" }, { status: 500 })
   }
 }

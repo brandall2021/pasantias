@@ -23,8 +23,22 @@ export function useFetch<T>(url: string | null) {
   }, [url])
 
   useEffect(() => {
-    cargar()
-  }, [cargar])
+    if (!url) return
+    let activo = true
+    ;(async () => {
+      try {
+        const result = await apiFetch<T>(url)
+        if (activo) setData(result)
+      } catch (e) {
+        if (activo) setError(e instanceof ApiClientError ? e.message : "Error de conexión")
+      } finally {
+        if (activo) setLoading(false)
+      }
+    })()
+    return () => {
+      activo = false
+    }
+  }, [url])
 
   return { data, loading, error, reload: cargar }
 }

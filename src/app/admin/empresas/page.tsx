@@ -4,8 +4,6 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import { ValidarEmpresaButton } from "./validar-button"
 
 export default async function AdminEmpresasPage() {
@@ -57,7 +55,7 @@ export default async function AdminEmpresasPage() {
                     <td className="py-3">{e._count.usuarios}</td>
                     <td className="py-3 text-xs text-gray-400">{formatDate(e.createdAt)}</td>
                     <td className="py-3">
-                      <ValidarEmpresaButton empresaId={e.id} estado={e.estado} nombre={e.nombre} />
+                      <ValidarEmpresaButton empresaId={e.id} estado={e.estado} />
                     </td>
                   </tr>
                 ))}

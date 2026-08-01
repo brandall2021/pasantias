@@ -27,7 +27,7 @@ export function PostularButton({ pasantiaId, yaPostulado }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [documentosPrevios, setDocumentosPrevios] = useState<any[]>([])
+  const [documentosPrevios, setDocumentosPrevios] = useState<{ tipo: string; url: string }[]>([])
   const [docsForm, setDocsForm] = useState<Record<string, string>>({})
   const router = useRouter()
 
@@ -38,7 +38,7 @@ export function PostularButton({ pasantiaId, yaPostulado }: Props) {
         setDocumentosPrevios(docs)
         const existentes: Record<string, string> = {}
         for (const doc of DOCS_REQUERIDOS) {
-          const previo = docs.find((d: any) => d.tipo === doc.tipo)
+          const previo = docs.find((d: { tipo: string }) => d.tipo === doc.tipo)
           if (previo) existentes[doc.tipo] = previo.url
         }
         setDocsForm(existentes)
@@ -130,7 +130,7 @@ export function PostularButton({ pasantiaId, yaPostulado }: Props) {
             </p>
             <div className="space-y-3">
               {DOCS_REQUERIDOS.map((doc) => {
-                const tienePrevio = documentosPrevios.some((d: any) => d.tipo === doc.tipo)
+                const tienePrevio = documentosPrevios.some((d) => d.tipo === doc.tipo)
                 return (
                   <div key={doc.tipo}>
                     <Label htmlFor={`doc_${doc.tipo}`} className="flex items-center gap-2">

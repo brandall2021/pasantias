@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
     await logAudit(session.user.id, "POSTULAR", `Se postuló a: ${pasantia.titulo}`, "Postulacion", postulacion.id)
     return NextResponse.json(postulacion)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Error al postularse" }, { status: 500 })
   }
 }
@@ -85,6 +85,15 @@ export async function PATCH(req: Request) {
   const updateData: Record<string, string | boolean | null> = {}
   if (estado !== undefined) {
     if (!esEmpresa && !esAdmin) return NextResponse.json({ error: "No autorizado a cambiar estado" }, { status: 401 })
+    if (estado === "ACEPTADO") {
+      const aceptadas = await PostulacionRepository.countAceptadas(postulacion.pasantiaId)
+      if (aceptadas >= postulacion.pasantia.vacantes) {
+        return NextResponse.json(
+          { error: `Vacantes cubiertas (${postulacion.pasantia.vacantes}). No se puede aceptar más postulaciones.` },
+          { status: 400 }
+        )
+      }
+    }
     updateData.estado = estado
   }
   if (tutorAcademicoId !== undefined) {

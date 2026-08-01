@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils"
 import { ConvenioUpload } from "@/components/convenio-upload"
 import { ConvenioMarcoList } from "./convenio-marco-form"
 import { SeguroForm } from "./seguro-form"
-import { BookOpen, Building2, Download, FileText, Users } from "lucide-react"
+import { BookOpen, Building2, Download, FileText, BarChart3 } from "lucide-react"
 
 export default async function UniversidadDashboard() {
   const session = await auth()
@@ -81,6 +81,13 @@ export default async function UniversidadDashboard() {
       </div>
 
       <div className="flex justify-end mb-6">
+        <Link
+          href="/universidad/reportes"
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 text-sm font-medium transition-all duration-200 mr-2"
+        >
+          <BarChart3 size={16} />
+          Panel analítico
+        </Link>
         <a
           href="/api/pdf/reportes"
           target="_blank"
@@ -128,9 +135,9 @@ export default async function UniversidadDashboard() {
                           <Download size={12} /> PDF
                         </a>
                       </td>
-                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaAlumno || false} parte="alumno" label="Alumno" disabled /></td>
-                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaEmpresa || false} parte="empresa" label="Empresa" disabled /></td>
-                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaUniversidad || false} parte="universidad" label="Universidad" /></td>
+                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaAlumno || false} parte="alumno" label="Alumno" disabled fechaFirma={p.convenio?.firmaAlumnoFecha?.toISOString()} /></td>
+                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaEmpresa || false} parte="empresa" label="Empresa" disabled fechaFirma={p.convenio?.firmaEmpresaFecha?.toISOString()} /></td>
+                      <td className="py-2"><ConvenioUpload postulacionId={p.id} firmado={p.convenio?.firmaUniversidad || false} parte="universidad" label="Universidad" fechaFirma={p.convenio?.firmaUniversidadFecha?.toISOString()} /></td>
                       <td className="py-2 text-xs text-gray-500">{p.tutorAcademico?.name || "—"}</td>
                       <td className="py-2 text-xs text-gray-500">{p.tutorEmpresa?.name || "—"}</td>
                       <td className="py-2"><SeguroForm postulacionId={p.id} /></td>

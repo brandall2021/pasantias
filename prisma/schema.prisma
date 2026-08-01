@@ -237,6 +237,12 @@ model Convenio {
   firmaAlumno      Boolean        @default(false)
   firmaEmpresa     Boolean        @default(false)
   firmaUniversidad Boolean        @default(false)
+  firmaAlumnoHash  String?
+  firmaEmpresaHash String?
+  firmaUniversidadHash String?
+  firmaAlumnoFecha DateTime?
+  firmaEmpresaFecha DateTime?
+  firmaUniversidadFecha DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

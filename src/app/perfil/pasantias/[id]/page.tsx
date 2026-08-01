@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { AREAS, ESTADOS_PASANTIA } from "@/lib/constants"
 import { CheckCircle, Send, XCircle, ChevronRight, ArrowLeftCircle } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 interface Pasantia {
   id: string
@@ -26,7 +27,7 @@ interface Pasantia {
   activo: boolean
 }
 
-const NEXT_STATES: Record<string, { label: string; icon: any; variant?: string; estado: string }[]> = {
+const NEXT_STATES: Record<string, { label: string; icon: LucideIcon; variant?: string; estado: string }[]> = {
   BORRADOR: [{ label: "Publicar pasantía", icon: Send, estado: "PUBLICADA" }],
   PUBLICADA: [{ label: "Iniciar selección", icon: ChevronRight, estado: "SELECCION" }],
   SELECCION: [{ label: "Esperar convenio", icon: ChevronRight, estado: "ESPERA_CONVENIO" }],
