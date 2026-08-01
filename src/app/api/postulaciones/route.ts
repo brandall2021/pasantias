@@ -38,8 +38,9 @@ export async function POST(req: Request) {
     // Guardar documentos adjuntos
     if (documentos?.length > 0) {
       await DocumentoRepository.createMany(
-        documentos.map((d: { tipo: string; url: string }) => ({
+        documentos.map((d: { tipo: string; url: string; nombre?: string }) => ({
           tipo: d.tipo,
+          nombre: d.nombre || null,
           url: d.url,
           usuarioId: session.user.id,
           postulacionId: postulacion.id,

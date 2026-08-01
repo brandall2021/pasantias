@@ -160,7 +160,7 @@ cp .env.example .env
 # Editar .env con tus datos (DATABASE_URL, AUTH_SECRET, CRON_SECRET, ...)
 
 npm run prisma migrate dev
-npm run prisma db seed
+npm run seed
 npm run dev
 ```
 
@@ -296,12 +296,16 @@ agendar la ejecución diaria con cron del host:
 
 | Método | Ruta | Auth | Descripción |
 |--------|------|------|-------------|
-| GET/POST | `/api/documentos` | Auth | Gestionar docs |
-| POST | `/api/uploads` | Auth | Subir archivo (form-data `file`, `tipo`) |
+| GET | `/api/documentos` | Auth | Listar mis documentos |
+| POST | `/api/documentos` | Auth | Guardar doc por link (JSON `{ tipo, url, nombre? }`) |
+| POST | `/api/documentos/upload` | Auth | Subir archivo (form-data `file`, `tipo`, `nombre?`) |
+| DELETE | `/api/documentos/[id]` | Auth | Eliminar documento propio |
 | GET | `/api/uploads/[archivo]` | - | Servir archivo subido |
 | GET | `/api/pdf/convenio?postulacionId=` | Auth | Descargar convenio en PDF |
 | GET | `/api/pdf/reportes` | Universidad/Admin | Reporte de gestión en PDF |
 | GET | `/api/carta?postulacionId=&tipo=presentacion\|aceptacion` | Auth | Carta de presentación/aceptación |
+
+Tipos de documento soportados: `CV`, `DNI`, `ANALITICO`, `ANALITICO_PARCIAL`, `ALUMNO_REGULAR`, `SALUD`, `CONVENIO`, `SEGURO`, `OTRO`. Los archivos subidos se guardan en `uploads/` (en Docker es un volumen a montar en `/app/uploads` para que persistan entre redeploys).
 
 ### Chat, notificaciones y auditoría
 
@@ -351,11 +355,19 @@ agendar la ejecución diaria con cron del host:
 
 ## Credenciales de prueba (seed)
 
-| Usuario | Email | Contraseña |
-|---------|-------|------------|
-| Admin | admin@pasantias.com | 123456 |
-| TechCorp (empresa) | techcorp@pasantias.com | 123456 |
-| Estudio Jurídico (empresa) | estudio@pasantias.com | 123456 |
-| Universidad Nacional | universidad@pasantias.com | 123456 |
-| Estudiante 1 | estudiante1@pasantias.com | 123456 |
-| Estudiante 2 | estudiante2@pasantias.com | 123456 |
+`npm run seed` carga una base de ejemplo completa y reejecutable (limpia y vuelve a crear): 1 universidad con facultad y 2 carreras, 2 empresas, 8 usuarios (uno por rol), 4 pasantías (una ACTIVA con convenio firmado), convenio marco, postulaciones, plan de trabajo, seguro, registro de horas, evaluación, chat, documentos y auditoría.
+
+Todos los usuarios usan la contraseña **`123456`**:
+
+| Rol | Usuario | Email |
+|-----|---------|-------|
+| Admin | Admin | admin@pasantias.com |
+| Universidad | Universidad Nacional de Tucumán | universidad@pasantias.com |
+| Empresa | TechCorp Argentina | techcorp@pasantias.com |
+| Empresa | Estudio Jurídico Pérez & Asoc. | estudio@pasantias.com |
+| Tutor académico | Lic. Ricardo Sosa | tutor-academico@pasantias.com |
+| Tutor empresa | Ing. Carla Méndez | tutor-empresa@pasantias.com |
+| Estudiante | Juan Pérez | estudiante1@pasantias.com |
+| Estudiante | María García | estudiante2@pasantias.com |
+
+Datos de ejemplo cargados: Juan Pérez está con la pasantía **ACTIVA** en TechCorp (convenio tripartito COMPLETADO con las 3 firmas electrónicas, plan de trabajo de 20 hs, seguro vigente, 4 registros de horas y evaluación intermedia); María García tiene una postulación **REVISADO**; Juan tiene otra **PENDIENTE** en el Estudio Jurídico. La universidad tiene un **convenio marco ACTIVO** con TechCorp.

@@ -60,9 +60,12 @@ enum TipoDocumento {
   CV
   DNI
   ANALITICO
+  ANALITICO_PARCIAL
   ALUMNO_REGULAR
+  SALUD
   CONVENIO
   SEGURO
+  OTRO
 }
 
 // ─── Empresa ──────────────────────────────────────────
@@ -284,6 +287,7 @@ model Mensaje {
 
 model Documento {
   id         String        @id @default(cuid())
+  nombre     String?
   tipo       TipoDocumento
   url        String
   verificado Boolean       @default(false)

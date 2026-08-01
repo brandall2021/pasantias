@@ -14,11 +14,11 @@ export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
-  const { tipo, url } = await req.json()
+  const { tipo, url, nombre } = await req.json()
   if (!tipo || !url) {
     return NextResponse.json({ error: "Faltan campos: tipo, url" }, { status: 400 })
   }
 
-  const documento = await DocumentoRepository.create({ tipo, url, usuarioId: session.user.id })
+  const documento = await DocumentoRepository.create({ tipo, url, nombre: nombre || null, usuarioId: session.user.id })
   return NextResponse.json(documento)
 }

@@ -31,7 +31,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 RUN npm install prisma@6.19.3
 
-RUN mkdir -p .next && chown nextjs:nodejs .next
+RUN mkdir -p .next uploads && chown nextjs:nodejs .next uploads
 
 USER nextjs
 

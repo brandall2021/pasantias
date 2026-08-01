@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const file = formData.get("file") as File | null
     const tipo = formData.get("tipo") as string
+    const nombre = (formData.get("nombre") as string) || file?.name || null
 
     if (!file || !tipo) {
       return NextResponse.json({ error: "Faltan campos: file, tipo" }, { status: 400 })
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 
     const documento = await DocumentoRepository.create({
       tipo: tipo as TipoDocumento,
+      nombre,
       url: `/api/uploads/${filename}`,
       usuarioId: session.user.id,
     })

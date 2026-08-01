@@ -48,10 +48,13 @@ export const ESTADOS_POSTULACION: Record<string, { label: string; color: string 
 }
 
 export const TIPOS_DOCUMENTO: Record<string, string> = {
-  CV: "CV",
+  CV: "Currículum Vitae",
   DNI: "DNI",
   ANALITICO: "Analítico",
-  ALUMNO_REGULAR: "Alumno Regular",
+  ANALITICO_PARCIAL: "Certificado analítico parcial",
+  ALUMNO_REGULAR: "Certificado de alumno regular",
+  SALUD: "Certificado de salud psicofísica",
   CONVENIO: "Convenio",
   SEGURO: "Seguro",
+  OTRO: "Otro",
 }

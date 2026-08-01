@@ -188,6 +188,11 @@ export default function DocumentosPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="nombre_file">Nombre del documento</Label>
+                  <Input id="nombre_file" name="nombre" placeholder="Ej: Analítico 2024 (opcional)" />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="file">Archivo (PDF, imagen, DOC)</Label>
                   <Input id="file" name="file" type="file" required accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" />
                 </div>
@@ -217,7 +222,7 @@ export default function DocumentosPage() {
                 <div className="flex items-center gap-3">
                   <FileText size={20} className="text-gray-400" />
                   <div>
-                    <p className="font-medium">{doc.nombre}</p>
+                    <p className="font-medium">{doc.nombre || TIPOS.find((t) => t.value === doc.tipo)?.label || doc.tipo}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${TIPO_COLORS[doc.tipo] || TIPO_COLORS.OTRO}`}>
                         {TIPOS.find((t) => t.value === doc.tipo)?.label || doc.tipo}
