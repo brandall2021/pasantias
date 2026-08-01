@@ -58,10 +58,13 @@ export default async function AdminUsuariosPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Usuarios</h1>
-        <p className="text-sm text-gray-500">{total} usuarios</p>
-      </div>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Usuarios</h1>
+          <p className="mt-1 text-sm text-gray-500">Gestión de cuentas del sistema.</p>
+        </div>
+        <span className="text-sm font-medium text-gray-500">{total} usuarios</span>
+      </header>
 
       <Card>
         <CardContent className="pt-6">
@@ -81,7 +84,7 @@ export default async function AdminUsuariosPage({
                 {usuarios.map((u) => (
                   <tr key={u.id} className="border-b last:border-0">
                     <td className="py-3">
-                      <Link href={`/admin/usuarios/${u.id}`} className="text-blue-600 hover:underline">
+                      <Link href={`/admin/usuarios/${u.id}`} className="text-primary-600 hover:underline">
                         {u.name}
                       </Link>
                     </td>

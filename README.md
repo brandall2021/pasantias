@@ -4,7 +4,7 @@ Plataforma web integral para conectar empresas, universidades y estudiantes en l
 Permite publicar oportunidades, postularse, administrar convenios tripartitos, firmar electrónicamente,
 planificar el trabajo con registro de horas y realizar seguimiento completo (bitácora, evaluaciones, seguros).
 
-Producción: <https://pasantia.softgroup.com.ar>
+Producción: <https://pasantias.softgroup.com.ar>
 
 ## Stack
 
@@ -208,7 +208,7 @@ Las migraciones se aplican automáticamente al iniciar el contenedor via `prisma
 Pasos en Dokploy:
 1. Crear la aplicación con el repositorio `github.com:brandall2021/pasantias.git`
 2. Configurar las variables de entorno (`.env.example` como base, incluyendo `CRON_SECRET`)
-3. Publicar el contenedor en el puerto 3000 y apuntar el dominio `pasantia.softgroup.com.ar`
+3. Publicar el contenedor en el puerto 3000 y apuntar el dominio `pasantias.softgroup.com.ar`
 
 ### Cron de recordatorios
 
@@ -217,7 +217,7 @@ agendar la ejecución diaria con cron del host:
 
 ```sh
 # Todos los días a las 8:00 AM
-0 8 * * * curl -fsS "https://pasantia.softgroup.com.ar/api/cron?token=<CRON_SECRET>" > /dev/null 2>&1
+0 8 * * * curl -fsS "https://pasantias.softgroup.com.ar/api/cron?token=<CRON_SECRET>" > /dev/null 2>&1
 ```
 
 **Tareas que ejecuta** (`src/services/cron.service.ts`):

@@ -79,8 +79,11 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Chat</h1>
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Chat</h1>
+        <p className="mt-1 text-sm text-gray-500">Conversaciones por postulación con alumnos, tutores y empresas.</p>
+      </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1">
@@ -102,7 +105,7 @@ export default function ChatPage() {
                       onClick={() => setSelectedChat(chat.id)}
                       className={`w-full text-left p-3 rounded-lg text-sm transition-colors ${
                         selectedChat === chat.id
-                          ? "bg-blue-50 text-blue-700"
+                          ? "bg-primary-50 text-primary-700"
                           : "hover:bg-gray-50"
                       }`}
                     >
@@ -138,13 +141,13 @@ export default function ChatPage() {
                       <div
                         className={`max-w-[70%] rounded-lg px-4 py-2 ${
                           msg.autorId === session?.user.id
-                            ? "bg-blue-600 text-white"
+                            ? "bg-primary-600 text-white"
                             : "bg-gray-100 text-gray-900"
                         }`}
                       >
                         <p className="text-sm">{msg.texto}</p>
                         <p className={`text-xs mt-1 ${
-                          msg.autorId === session?.user.id ? "text-blue-200" : "text-gray-400"
+                          msg.autorId === session?.user.id ? "text-primary-100" : "text-gray-400"
                         }`}>
                           {formatDate(msg.fecha)}
                         </p>

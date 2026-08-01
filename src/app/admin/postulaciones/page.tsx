@@ -44,8 +44,10 @@ export default async function AdminPostulacionesPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Postulaciones</h1>
-      <p className="text-sm text-gray-500 mb-4">{total} postulaciones</p>
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Postulaciones</h1>
+        <p className="mt-1 text-sm text-gray-500">{total} postulaciones registradas.</p>
+      </header>
       <Card>
         <CardContent className="pt-6">
           <div className="overflow-x-auto">

@@ -82,10 +82,13 @@ export default function AuditoriaPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield size={28} className="text-gray-700" />
-        <h1 className="text-2xl font-bold">Auditoría</h1>
-      </div>
+      <header className="mb-6 flex items-center gap-3">
+        <Shield size={28} className="text-primary-600" />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Auditoría</h1>
+          <p className="mt-0.5 text-sm text-gray-500">Historial de acciones del sistema.</p>
+        </div>
+      </header>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">

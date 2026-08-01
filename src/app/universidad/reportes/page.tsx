@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatCard } from "@/components/ui/stat-card"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { AnalyticsService } from "@/services/analytics.service"
-import { BarChart3, CheckCircle2, Clock, GraduationCap, Star, FileCheck, Percent } from "lucide-react"
+import { CheckCircle2, Clock, GraduationCap, Star, FileCheck, Percent, Briefcase } from "lucide-react"
 import Link from "next/link"
 
 export default async function ReportesPage() {
@@ -25,20 +27,12 @@ export default async function ReportesPage() {
   const maxHorasMes = Math.max(1, ...horasPorMes.map(([, v]) => v))
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <BarChart3 size={28} className="text-blue-600" />
-        <div>
-          <h1 className="text-2xl font-bold">Panel analítico</h1>
-          <p className="text-sm text-gray-500">Métricas de pasantías, horas y evaluaciones de tu universidad.</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card><CardContent className="pt-6 text-center"><div className="flex items-center justify-center mb-2"><GraduationCap size={20} className="text-blue-600" /></div><p className="text-2xl font-bold text-blue-600">{resumen.totalPasantias}</p><p className="text-sm text-gray-500">Pasantías</p><p className="text-xs text-gray-400">{resumen.totalFinalizadas} finalizadas</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><div className="flex items-center justify-center mb-2"><Percent size={20} className="text-green-600" /></div><p className="text-2xl font-bold text-green-600">{resumen.tasaFinalizacion}%</p><p className="text-sm text-gray-500">Tasa de finalización</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><div className="flex items-center justify-center mb-2"><Clock size={20} className="text-purple-600" /></div><p className="text-2xl font-bold text-purple-600">{resumen.totalHoras}</p><p className="text-sm text-gray-500">Horas registradas</p><p className="text-xs text-gray-400">avance {resumen.avanceHoras}%</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><div className="flex items-center justify-center mb-2"><Star size={20} className="text-yellow-500" /></div><p className="text-2xl font-bold text-yellow-500">{resumen.evaluacionPromedio}</p><p className="text-sm text-gray-500">Promedio evaluaciones</p></CardContent></Card>
+    <DashboardLayout nombre={session.user.name ?? "Universidad"} subtitulo="Panel analítico: métricas de pasantías, horas y evaluaciones de tu universidad.">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={<Briefcase size={20} />} label="Pasantías" value={resumen.totalPasantias} hint={`${resumen.totalFinalizadas} finalizadas`} tone="primary" />
+        <StatCard icon={<Percent size={20} />} label="Tasa de finalización" value={`${resumen.tasaFinalizacion}%`} tone="success" />
+        <StatCard icon={<Clock size={20} />} label="Horas registradas" value={resumen.totalHoras} hint={`avance ${resumen.avanceHoras}%`} tone="purple" />
+        <StatCard icon={<Star size={20} />} label="Promedio evaluaciones" value={resumen.evaluacionPromedio} tone="warning" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
@@ -106,10 +100,10 @@ export default async function ReportesPage() {
             <span><strong>{resumen.totalPostulaciones}</strong> postulaciones totales</span>
           </div>
           <div className="ml-auto">
-            <Link href="/universidad" className="text-blue-600 hover:underline text-sm">← Volver al dashboard</Link>
+            <Link href="/universidad" className="text-primary-600 hover:underline text-sm">← Volver al dashboard</Link>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </DashboardLayout>
   )
 }

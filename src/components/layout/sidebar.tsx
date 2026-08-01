@@ -40,7 +40,6 @@ const COMMON: NavItem[] = [
 
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
   ADMIN: [
-    { href: "/admin", label: "Panel admin", icon: Shield },
     { href: "/admin/usuarios", label: "Usuarios", icon: Users },
     { href: "/admin/empresas", label: "Empresas", icon: Building2 },
     { href: "/admin/pasantias", label: "Pasantías", icon: Briefcase },

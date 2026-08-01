@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { formatDate } from "@/lib/utils"
-import { CalendarDays, FileCheck, Play, Star, Timer } from "lucide-react"
+import { FileCheck, Play, Star, Timer } from "lucide-react"
 
 type Evento = {
   fecha: Date
@@ -129,15 +130,7 @@ export default async function CalendarioPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <CalendarDays size={28} className="text-blue-600" />
-        <div>
-          <h1 className="text-2xl font-bold">Calendario de pasantías</h1>
-          <p className="text-sm text-gray-500">Fechas clave de pasantías activas: inicio, evaluaciones y cierre.</p>
-        </div>
-      </div>
-
+    <DashboardLayout nombre={session.user.name ?? "Usuario"} subtitulo="Fechas clave de tus pasantías: inicio, evaluaciones y cierre.">
       {agrupado.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-sm text-gray-500">
@@ -172,6 +165,6 @@ export default async function CalendarioPage() {
           </div>
         ))
       )}
-    </div>
+    </DashboardLayout>
   )
 }

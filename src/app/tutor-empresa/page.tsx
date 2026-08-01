@@ -4,8 +4,10 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/ui/stat-card"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { formatDate } from "@/lib/utils"
-import { FileText, Building2, Clock, Download, MessageSquare } from "lucide-react"
+import { FileText, Clock, Download, MessageSquare, FileSignature, Briefcase } from "lucide-react"
 import { SeguimientoForm } from "@/app/tutor-academico/seguimiento-form"
 import { PlanTrabajoForm } from "@/app/tutor-academico/plan-trabajo-form"
 import { RegistroHorasForm } from "@/app/tutor-academico/registro-horas-form"
@@ -38,15 +40,10 @@ export default async function TutorEmpresaDashboard() {
   const activas = postulaciones.filter((p) => p.convenio?.firmaEmpresa && p.pasantia.estado === "ACTIVA")
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Building2 size={28} className="text-blue-600" />
-        <h1 className="text-2xl font-bold">Panel del Tutor Empresarial</h1>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-yellow-600">{conveniosPendientes.length}</p><p className="text-sm text-gray-500">Convenios por firmar</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-green-600">{activas.length}</p><p className="text-sm text-gray-500">Pasantías activas</p></CardContent></Card>
+    <DashboardLayout nombre={session.user.name ?? "Tutor empresarial"} subtitulo="Panel del tutor empresarial: seguimiento, plan de trabajo y horas de tus alumnos.">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard icon={<FileSignature size={20} />} label="Convenios por firmar" value={conveniosPendientes.length} tone="warning" />
+        <StatCard icon={<Briefcase size={20} />} label="Pasantías activas" value={activas.length} tone="success" />
       </div>
 
       {conveniosPendientes.length > 0 && (
@@ -171,6 +168,6 @@ export default async function TutorEmpresaDashboard() {
           })}
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

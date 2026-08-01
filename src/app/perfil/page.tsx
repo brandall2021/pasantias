@@ -19,8 +19,11 @@ export default async function PerfilPage() {
   if (!user) redirect("/login")
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Mi Perfil</h1>
+    <div className="mx-auto max-w-2xl">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Mi Perfil</h1>
+        <p className="mt-1 text-sm text-gray-500">Datos personales, historial y accesos de tu cuenta.</p>
+      </header>
 
       <Card>
         <CardHeader>
@@ -54,7 +57,7 @@ export default async function PerfilPage() {
                 <FileText size={18} className="text-gray-400 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm text-gray-500">URL de CV</p>
-                  <a href={user.cvUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 underline break-all">
+                  <a href={user.cvUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary-600 underline break-all">
                     {user.cvUrl}
                   </a>
                 </div>
@@ -83,9 +86,9 @@ export default async function PerfilPage() {
         {user.role === "EMPRESA" && (
           <>
             <Link href="/perfil/pasantias">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer hover:shadow-card transition-all hover:-translate-y-0.5">
                 <CardContent className="pt-6 flex items-center gap-3">
-                  <Building2 size={24} className="text-blue-600" />
+                  <Building2 size={24} className="text-primary-600" />
                   <div>
                     <h3 className="font-semibold">Mis Pasantías</h3>
                     <p className="text-sm text-gray-500">Gestionar publicaciones</p>
@@ -94,9 +97,9 @@ export default async function PerfilPage() {
               </Card>
             </Link>
             <Link href="/perfil/postulaciones-recibidas">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer hover:shadow-card transition-all hover:-translate-y-0.5">
                 <CardContent className="pt-6 flex items-center gap-3">
-                  <ClipboardList size={24} className="text-orange-600" />
+                  <ClipboardList size={24} className="text-warning-600" />
                   <div>
                     <h3 className="font-semibold">Postulaciones recibidas</h3>
                     <p className="text-sm text-gray-500">Revisar y gestionar postulaciones</p>
@@ -109,9 +112,9 @@ export default async function PerfilPage() {
         {user.role === "ESTUDIANTE" && (
           <>
             <Link href="/perfil/postulaciones">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer hover:shadow-card transition-all hover:-translate-y-0.5">
                 <CardContent className="pt-6 flex items-center gap-3">
-                  <User size={24} className="text-blue-600" />
+                  <User size={24} className="text-primary-600" />
                   <div>
                     <h3 className="font-semibold">Mis Postulaciones</h3>
                     <p className="text-sm text-gray-500">Ver estado de mis postulaciones</p>
@@ -120,7 +123,7 @@ export default async function PerfilPage() {
               </Card>
             </Link>
             <Link href="/perfil/documentos">
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="cursor-pointer hover:shadow-card transition-all hover:-translate-y-0.5">
                 <CardContent className="pt-6 flex items-center gap-3">
                   <FileText size={24} className="text-purple-600" />
                   <div>

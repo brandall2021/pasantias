@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/ui/stat-card"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { formatDate } from "@/lib/utils"
-import { FileText, User, Clock, Download } from "lucide-react"
+import { FileText, Clock, Download, FileSignature, Briefcase, CheckCircle2 } from "lucide-react"
 import { SeguimientoForm } from "./seguimiento-form"
 import { PlanTrabajoForm } from "./plan-trabajo-form"
 import { RegistroHorasForm } from "./registro-horas-form"
@@ -45,16 +47,11 @@ export default async function TutorAcademicoDashboard() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <User size={28} className="text-purple-600" />
-        <h1 className="text-2xl font-bold">Panel del Tutor Académico</h1>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-yellow-600">{conveniosPendientes.length}</p><p className="text-sm text-gray-500">Convenios pendientes</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-green-600">{activas.length}</p><p className="text-sm text-gray-500">Pasantías activas</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-gray-600">{finalizadas.length}</p><p className="text-sm text-gray-500">Finalizadas</p></CardContent></Card>
+    <DashboardLayout nombre={session.user.name ?? "Tutor académico"} subtitulo="Panel del tutor académico: seguimiento, planes de trabajo y registro de horas.">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard icon={<FileSignature size={20} />} label="Convenios por firmar" value={conveniosPendientes.length} tone="warning" />
+        <StatCard icon={<Briefcase size={20} />} label="Pasantías activas" value={activas.length} tone="success" />
+        <StatCard icon={<CheckCircle2 size={20} />} label="Finalizadas" value={finalizadas.length} tone="primary" />
       </div>
 
       {conveniosPendientes.length > 0 && (
@@ -173,6 +170,6 @@ export default async function TutorAcademicoDashboard() {
           })}
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }

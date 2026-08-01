@@ -39,10 +39,13 @@ export default async function AdminPasantiasPage({
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Todas las Pasantías</h1>
-        <p className="text-sm text-gray-500">{total} pasantías</p>
-      </div>
+      <header className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Todas las Pasantías</h1>
+          <p className="mt-1 text-sm text-gray-500">Moderación de pasantías publicadas.</p>
+        </div>
+        <span className="text-sm font-medium text-gray-500">{total} pasantías</span>
+      </header>
 
       <Card>
         <CardContent className="pt-6">

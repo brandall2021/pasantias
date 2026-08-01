@@ -14,19 +14,9 @@ import {
 } from "lucide-react"
 import { StatCard } from "@/components/ui/stat-card"
 import { ActivityFeed, type ActivityItem } from "@/components/shared/activity-feed"
-import { Badge } from "@/components/ui/badge"
-
-function timeAgo(date: Date): string {
-  const secs = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (secs < 60) return "ahora"
-  const mins = Math.floor(secs / 60)
-  if (mins < 60) return `hace ${mins} min`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `hace ${hours} h`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `hace ${days} d`
-  return new Date(date).toLocaleDateString("es-AR", { day: "numeric", month: "short" })
-}
+import { DashboardLayout, SectionCard } from "@/components/layout/dashboard-layout"
+import { StepItem, QuickLink } from "@/components/shared/dashboard-blocks"
+import { timeAgo } from "@/lib/utils"
 
 const POSTULACION_TONE: Record<string, "primary" | "success" | "warning" | "danger" | "purple"> = {
   PENDIENTE: "warning",
@@ -285,50 +275,3 @@ export default async function DashboardPage() {
   )
 }
 
-function DashboardLayout({ nombre, subtitulo, children }: { nombre: string; subtitulo: string; children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Bienvenido, {nombre.split(" ")[0]}</h1>
-        <p className="mt-1 text-sm text-gray-500">{subtitulo}</p>
-      </header>
-      {children}
-    </div>
-  )
-}
-
-function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white shadow-card">
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-gray-400">{subtitle}</p>}
-        </div>
-      </div>
-      <div className="px-6 py-2">{children}</div>
-    </div>
-  )
-}
-
-function StepItem({ done, label, href }: { done: boolean; label: string; href: string }) {
-  return (
-    <li>
-      <a href={href} className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 transition-all hover:border-primary-300 hover:shadow-card">
-        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${done ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-600"}`}>
-          {done ? "✓" : "•"}
-        </span>
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-      </a>
-    </li>
-  )
-}
-
-function QuickLink({ href, label, value }: { href: string; label: string; value: string }) {
-  return (
-    <a href={href} className="flex items-center justify-between rounded-xl border border-gray-200 p-3 transition-all hover:border-primary-300 hover:shadow-card">
-      <span className="text-sm font-medium text-gray-700">{label}</span>
-      <Badge variant="secondary">{value}</Badge>
-    </a>
-  )
-}

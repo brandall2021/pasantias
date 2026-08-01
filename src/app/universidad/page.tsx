@@ -4,11 +4,14 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
+import { StatCard } from "@/components/ui/stat-card"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { formatDate } from "@/lib/utils"
 import { ConvenioUpload } from "@/components/convenio-upload"
 import { ConvenioMarcoList } from "./convenio-marco-form"
 import { SeguroForm } from "./seguro-form"
-import { BookOpen, Building2, Download, FileText, BarChart3 } from "lucide-react"
+import { BookOpen, Building2, Download, FileText, BarChart3, FileSignature } from "lucide-react"
 
 export default async function UniversidadDashboard() {
   const session = await auth()
@@ -67,32 +70,20 @@ export default async function UniversidadDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Building2 size={28} className="text-green-600" />
-        <h1 className="text-2xl font-bold">{universidad.nombre}</h1>
+    <DashboardLayout nombre={session.user.name ?? "Universidad"} subtitulo={`${universidad.nombre} · ${stats.facultades} facultades, ${stats.carreras} carreras.`}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={<Building2 size={20} />} label="Facultades" value={stats.facultades} tone="primary" />
+        <StatCard icon={<BookOpen size={20} />} label="Carreras" value={stats.carreras} tone="purple" />
+        <StatCard icon={<FileText size={20} />} label="Pasantías activas" value={stats.pasantias} tone="success" />
+        <StatCard icon={<FileSignature size={20} />} label="Convenios pendientes" value={stats.conveniosPendientes} hint="Requieren firma" tone={stats.conveniosPendientes > 0 ? "warning" : "primary"} />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-green-600">{stats.facultades}</p><p className="text-sm text-gray-500">Facultades</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-blue-600">{stats.carreras}</p><p className="text-sm text-gray-500">Carreras</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className="text-2xl font-bold text-purple-600">{stats.pasantias}</p><p className="text-sm text-gray-500">Pasantías activas</p></CardContent></Card>
-        <Card><CardContent className="pt-6 text-center"><p className={`text-2xl font-bold ${stats.conveniosPendientes > 0 ? "text-yellow-600" : "text-gray-600"}`}>{stats.conveniosPendientes}</p><p className="text-sm text-gray-500">Convenios pendientes</p></CardContent></Card>
-      </div>
-
-      <div className="flex justify-end mb-6">
-        <Link
-          href="/universidad/reportes"
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 text-sm font-medium transition-all duration-200 mr-2"
-        >
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <Link href="/universidad/reportes" className={buttonVariants({ variant: "outline" })}>
           <BarChart3 size={16} />
           Panel analítico
         </Link>
-        <a
-          href="/api/pdf/reportes"
-          target="_blank"
-          className="inline-flex items-center gap-2 rounded-lg bg-green-600 text-white hover:bg-green-700 h-10 px-4 text-sm font-medium transition-all duration-200"
-        >
+        <a href="/api/pdf/reportes" target="_blank" className={buttonVariants({ variant: "success" })}>
           <Download size={16} />
           Descargar Reporte PDF
         </a>
@@ -183,6 +174,6 @@ export default async function UniversidadDashboard() {
       <div className="mt-6">
         <ConvenioMarcoList />
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
