@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Pasantía ${getAreaLabel(pasantia.area)} en ${pasantia.empresa.nombre}`,
       url: `https://pasantias.softgroup.com.ar/pasantias/${pasantia.id}`,
       type: "article",
+      images: ["/opengraph-image"],
     },
   }
 }

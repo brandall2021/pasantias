@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     description: "Encontrá pasantías por área, modalidad y ubicación.",
     url: "https://pasantias.softgroup.com.ar/pasantias",
     type: "website",
+    images: ["/opengraph-image"],
   },
 }
 
