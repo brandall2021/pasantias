@@ -6,7 +6,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-bold text-lg text-blue-600 mb-2">Gestión de Pasantías</h3>
+            <h3 className="font-bold text-lg text-primary-600 mb-2">Gestión de Pasantías</h3>
             <p className="text-sm text-gray-500">
               Conectamos estudiantes con las mejores oportunidades de pasantías.
             </p>
@@ -14,9 +14,9 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-sm text-gray-700 mb-2">Enlaces</h4>
             <div className="space-y-1">
-              <Link href="/pasantias" className="block text-sm text-gray-500 hover:text-blue-600">Buscar Pasantías</Link>
-              <Link href="/register" className="block text-sm text-gray-500 hover:text-blue-600">Registrarse</Link>
-              <Link href="/login" className="block text-sm text-gray-500 hover:text-blue-600">Iniciar Sesión</Link>
+              <Link href="/pasantias" className="block text-sm text-gray-500 hover:text-primary-600">Buscar Pasantías</Link>
+              <Link href="/register" className="block text-sm text-gray-500 hover:text-primary-600">Registrarse</Link>
+              <Link href="/login" className="block text-sm text-gray-500 hover:text-primary-600">Iniciar Sesión</Link>
             </div>
           </div>
           <div>

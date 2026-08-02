@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus } from "lucide-react"
 import { ESTADOS_PASANTIA } from "@/lib/constants"
@@ -28,20 +28,16 @@ export default async function MisPasantiasPage() {
         <div>
           <h1 className="text-2xl font-bold">Mis Pasantías</h1>
         </div>
-        <Link href="/perfil/pasantias/nueva">
-          <Button>
-            <Plus size={16} />
-            Nueva Pasantía
-          </Button>
+        <Link href="/perfil/pasantias/nueva" className={buttonVariants({ size: "md" })}>
+          <Plus size={16} />
+          Nueva Pasantía
         </Link>
       </div>
 
       {pasantias.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p className="mb-4">Todavía no publicaste ninguna pasantía.</p>
-          <Link href="/perfil/pasantias/nueva">
-            <Button>Publicar primera pasantía</Button>
-          </Link>
+          <Link href="/perfil/pasantias/nueva" className={buttonVariants()}>Publicar primera pasantía</Link>
         </div>
       ) : (
         <div className="space-y-4">

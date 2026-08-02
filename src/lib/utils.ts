@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function formatARS(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === "") return null
+  const n =
+    typeof value === "string" ? Number(value.replace(/[^0-9.]/g, "")) : value
+  if (!Number.isFinite(n) || n === 0) return null
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(n)
+}
+
 export function formatDate(date: Date | string | null | undefined) {
   if (!date) return "—"
   const d = new Date(date)

@@ -65,7 +65,7 @@ export default function RestablecerPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Lock size={40} className="text-blue-600" />
+            <Lock size={40} className="text-primary-600" />
           </div>
           <CardTitle className="text-xl">Nueva Contraseña</CardTitle>
         </CardHeader>
@@ -90,7 +90,7 @@ export default function RestablecerPage() {
                 {loading ? "Guardando..." : "Restablecer contraseña"}
               </Button>
               <p className="text-center text-sm text-gray-500">
-                <Link href="/login" className="text-blue-600 hover:underline">Volver al inicio de sesión</Link>
+                <Link href="/login" className="text-primary-600 hover:underline">Volver al inicio de sesión</Link>
               </p>
             </form>
           )}

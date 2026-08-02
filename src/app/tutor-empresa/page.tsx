@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/ui/stat-card"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { formatDate } from "@/lib/utils"
+import { getAreaLabel } from "@/lib/constants"
 import { FileText, Clock, Download, MessageSquare, FileSignature, Briefcase } from "lucide-react"
 import { SeguimientoForm } from "@/app/tutor-academico/seguimiento-form"
 import { PlanTrabajoForm } from "@/app/tutor-academico/plan-trabajo-form"
@@ -95,7 +96,7 @@ export default async function TutorEmpresaDashboard() {
                     <div>
                       <CardTitle className="text-base flex items-center gap-2">
                         <span>{p.alumno.name}</span>
-                        <Badge variant="secondary">{p.pasantia.area}</Badge>
+                        <Badge variant="secondary">{getAreaLabel(p.pasantia.area)}</Badge>
                         {p.alumno.carrera && <span className="text-xs text-gray-400">{p.alumno.carrera.nombre}</span>}
                       </CardTitle>
                       <p className="text-sm text-gray-500">{p.pasantia.titulo} — {p.pasantia.empresa.nombre}</p>

@@ -44,7 +44,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Building2 size={40} className="text-blue-600" />
+            <Building2 size={40} className="text-primary-600" />
           </div>
           <CardTitle className="text-xl">Iniciar Sesión</CardTitle>
         </CardHeader>
@@ -62,7 +62,7 @@ export default function LoginPage() {
               <Input id="password" name="password" type="password" required placeholder="••••••••" />
             </div>
             <div className="flex justify-end">
-              <Link href="/recuperar" className="text-xs text-blue-600 hover:underline">¿Olvidaste tu contraseña?</Link>
+              <Link href="/recuperar" className="text-xs text-primary-600 hover:underline">¿Olvidaste tu contraseña?</Link>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Ingresando..." : "Ingresar"}
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-500 mt-4">
             ¿No tenés cuenta?{" "}
-            <Link href="/register" className="text-blue-600 hover:underline">Registrarse</Link>
+            <Link href="/register" className="text-primary-600 hover:underline">Registrarse</Link>
           </p>
         </CardContent>
       </Card>

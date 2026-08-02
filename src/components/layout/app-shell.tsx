@@ -106,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        <main id="main" className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   )

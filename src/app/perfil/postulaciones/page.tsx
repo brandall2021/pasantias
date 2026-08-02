@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatARS } from "@/lib/utils"
+import { getAreaLabel, getModalidadLabel } from "@/lib/constants"
 import Link from "next/link"
 import { Download } from "lucide-react"
 import { ConvenioUpload } from "@/components/convenio-upload"
@@ -52,11 +53,11 @@ export default async function MisPostulacionesPage() {
                       <div>
                         <h3 className="font-semibold">{p.pasantia.titulo}</h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary">{p.pasantia.area}</Badge>
-                          <Badge variant="secondary">{p.pasantia.modalidad}</Badge>
+                          <Badge variant="secondary">{getAreaLabel(p.pasantia.area)}</Badge>
+                          <Badge variant="secondary">{getModalidadLabel(p.pasantia.modalidad)}</Badge>
                         </div>
                         {p.pasantia.becaEconomica && (
-                          <p className="text-xs text-gray-400 mt-1">Beca: ${p.pasantia.becaEconomica}</p>
+                          <p className="text-xs text-gray-600 mt-1">Beca: {formatARS(p.pasantia.becaEconomica)}</p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
                           Postulado el {formatDate(p.fecha)}

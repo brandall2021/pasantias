@@ -65,7 +65,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Building2 size={40} className="text-blue-600" />
+            <Building2 size={40} className="text-primary-600" />
           </div>
           <CardTitle className="text-xl">Crear Cuenta</CardTitle>
         </CardHeader>
@@ -163,7 +163,7 @@ export default function RegisterPage() {
           </form>
           <p className="text-center text-sm text-gray-500 mt-4">
             ¿Ya tenés cuenta?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline">Iniciar sesión</Link>
+            <Link href="/login" className="text-primary-600 hover:underline">Iniciar sesión</Link>
           </p>
         </CardContent>
       </Card>

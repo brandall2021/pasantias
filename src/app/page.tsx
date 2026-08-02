@@ -2,9 +2,11 @@ import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { cn, formatARS } from "@/lib/utils"
+import { getAreaColor, getAreaLabel, getModalidadLabel } from "@/lib/constants"
 import { Search, Users, Star, ArrowRight, Building2, Briefcase, FileSignature, Sparkles } from "lucide-react"
 
 async function getLandingData() {
@@ -60,16 +62,12 @@ export default async function Home() {
               Postulate con tu CV, seguí el estado y firmá el convenio en un solo lugar.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/pasantias">
-                <Button size="lg" className="bg-white text-primary-700 shadow-lift hover:bg-blue-50">
-                  <Search size={18} />
-                  Buscar Pasantías
-                </Button>
+              <Link href="/pasantias" className={cn(buttonVariants({ size: "lg" }), "bg-white text-primary-700 shadow-lift hover:bg-blue-50")}>
+                <Search size={18} />
+                Buscar Pasantías
               </Link>
-              <Link href="/register">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 hover:border-white">
-                  Crear cuenta
-                </Button>
+              <Link href="/register" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "border-white/40 text-white hover:bg-white/10 hover:border-white")}>
+                Crear cuenta
               </Link>
             </div>
           </div>
@@ -114,24 +112,27 @@ export default async function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {pasantias.map((p) => (
-              <Link key={p.id} href={`/pasantias/${p.id}`}>
-                <Card className="h-full cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
-                  <CardContent className="pt-6">
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <Badge>{p.area}</Badge>
-                      <Badge variant="secondary" dot>{p.modalidad}</Badge>
-                    </div>
-                    <h3 className="mb-1 font-semibold text-gray-900">{p.titulo}</h3>
-                    <p className="mb-3 text-sm text-gray-500">{p.empresa.nombre}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                      {p.becaEconomica && <span>${p.becaEconomica}</span>}
-                      {p.duracion && <span>· {p.duracion}</span>}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {pasantias.map((p) => {
+              const beca = formatARS(p.becaEconomica)
+              return (
+                <Link key={p.id} href={`/pasantias/${p.id}`}>
+                  <Card className="h-full cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
+                    <CardContent className="pt-6">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <Badge className={getAreaColor(p.area)}>{getAreaLabel(p.area)}</Badge>
+                        <Badge variant="secondary" dot>{getModalidadLabel(p.modalidad)}</Badge>
+                      </div>
+                      <h3 className="mb-1 font-semibold text-gray-900">{p.titulo}</h3>
+                      <p className="mb-3 text-sm text-gray-600">{p.empresa.nombre}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        {beca && <span>{beca}</span>}
+                        {p.duracion && <span>· {p.duracion}</span>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -147,7 +148,7 @@ export default async function Home() {
                   <Building2 size={24} />
                 </div>
                 <p className="text-xs font-semibold text-gray-700">{emp.nombre}</p>
-                <p className="text-[11px] text-gray-400">{emp._count.pasantias} pasantía{emp._count.pasantias !== 1 ? "s" : ""}</p>
+                <p className="text-[11px] text-gray-600">{emp._count.pasantias} pasantía{emp._count.pasantias !== 1 ? "s" : ""}</p>
               </div>
             ))}
           </div>
@@ -164,16 +165,12 @@ export default async function Home() {
               {totalConvenios} convenios ya firmados entre alumnos, universidades y empresas. Sumate a la red.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <Link href="/register">
-                <Button size="lg" className="bg-white text-primary-700 hover:bg-blue-50">
-                  <FileSignature size={18} />
-                  Registrarme gratis
-                </Button>
+              <Link href="/register" className={cn(buttonVariants({ size: "lg" }), "bg-white text-primary-700 hover:bg-blue-50")}>
+                <FileSignature size={18} />
+                Registrarme gratis
               </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
-                  Iniciar sesión
-                </Button>
+              <Link href="/login" className={cn(buttonVariants({ size: "lg", variant: "outline" }), "border-white/40 text-white hover:bg-white/10")}>
+                Iniciar sesión
               </Link>
             </div>
           </div>

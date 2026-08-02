@@ -22,6 +22,54 @@ export const MODALIDADES = [
   { value: "REMOTA", label: "Remota" },
 ] as const
 
+export const AREAS_MAP: Record<string, string> = Object.fromEntries(
+  AREAS.map((a) => [a.value, a.label]),
+)
+
+export const AREA_COLORS: Record<string, string> = {
+  tecnologia: "bg-blue-50 text-blue-700",
+  administracion: "bg-indigo-50 text-indigo-700",
+  contabilidad: "bg-emerald-50 text-emerald-700",
+  marketing: "bg-pink-50 text-pink-700",
+  diseno: "bg-purple-50 text-purple-700",
+  educacion: "bg-amber-50 text-amber-700",
+  salud: "bg-teal-50 text-teal-700",
+  ingenieria: "bg-cyan-50 text-cyan-700",
+  "recursos-humanos": "bg-rose-50 text-rose-700",
+  comunicacion: "bg-sky-50 text-sky-700",
+  legal: "bg-violet-50 text-violet-700",
+  comercial: "bg-orange-50 text-orange-700",
+  produccion: "bg-lime-50 text-lime-700",
+  logistica: "bg-slate-50 text-slate-700",
+  otro: "bg-gray-50 text-gray-700",
+}
+
+export function getAreaLabel(area: string) {
+  return AREAS_MAP[area] ?? area
+}
+
+export function getAreaColor(area: string) {
+  return AREA_COLORS[area] ?? "bg-gray-50 text-gray-700"
+}
+
+export const MODALIDADES_MAP: Record<string, string> = Object.fromEntries(
+  MODALIDADES.map((m) => [m.value, m.label]),
+)
+
+export const MODALIDAD_COLORS: Record<string, string> = {
+  PRESENCIAL: "bg-gray-100 text-gray-700",
+  HIBRIDA: "bg-amber-50 text-amber-700",
+  REMOTA: "bg-sky-50 text-sky-700",
+}
+
+export function getModalidadLabel(modalidad: string) {
+  return MODALIDADES_MAP[modalidad] ?? modalidad
+}
+
+export function getModalidadColor(modalidad: string) {
+  return MODALIDAD_COLORS[modalidad] ?? "bg-gray-100 text-gray-700"
+}
+
 export const PROVINCIAS_ARGENTINA = [
   "Buenos Aires", "Catamarca", "Chaco", "Chubut", "Córdoba",
   "Corrientes", "Entre Ríos", "Formosa", "Jujuy", "La Pampa",
